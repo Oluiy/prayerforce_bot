@@ -1,0 +1,62 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  chatId     String    @unique
+  firstName  String?   
+  lastName   String?
+  birthday   DateTime? 
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  userQuestions UserQuestion[]
+}
+
+model Question {
+  id         Int       @id @default(autoincrement())
+  text       String    @db.VarChar(255)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  options    Option[]
+  userQuestions UserQuestion[] // Added opposite relation field
+}
+
+model Option {
+  id           Int       @id @default(autoincrement())
+  text         String    
+  isCorrect    Boolean   @default(false)
+  question     Question  @relation(fields: [questionId], references: [id])
+  questionId   Int
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  userQuestions UserQuestion[] // Added opposite relation field
+}
+
+model Announcement {
+  id          Int       @id @default(autoincrement())
+  text        String
+  createdAt   DateTime  @default(now())
+  updated     DateTime  @updatedAt
+}
+
+
+model UserQuestion {
+  id           Int       @id @default(autoincrement())
+  user         User      @relation(fields: [userId], references: [id])
+  userId       Int
+  question     Question  @relation(fields: [questionId], references: [id])
+  questionId   Int
+  answeredAt   DateTime  @default(now())
+  selectedOption Option? @relation(fields: [optionId], references: [id])
+  optionId     Int?       
+}

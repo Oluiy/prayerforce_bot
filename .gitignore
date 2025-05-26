@@ -1,0 +1,11 @@
+bot/.env
+2025-05-02 12.46.57.jpg
+.vscode/settings.json
+
+# bot/handlers/__pycache__/annoucement.cpython-313.pyc
+# bot/handlers/__pycache__/query.cpython-313.pyc
+# bot/handlers/__pycache__/commandHandler.cpython-313.pyc
+bot/handlers/__pycache__
+bot/handlers/num = random.py
+bot/Prisma/__pycache__/prisma_connect.cpython-313.pyc
+bot/Prisma/__pycache__/prismaQueries.cpython-313.pyc
