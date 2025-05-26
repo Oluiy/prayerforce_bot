@@ -36,8 +36,8 @@ async def daily_recharge(application: Application):
     for user in users:
         try:
             message_text = (
-                "Daily Recharge 🥰🙏 !!!"
-                f"King {user.firstName}, this is a personal reminder that we’ll be having our daily prayer meeting for just 30mins today from 7:00pm-7:30pm."
+                "Daily Recharge 🥰🙏 !!!\n\n"
+                f"{user.firstName}, this is a personal reminder that we’ll be having our daily prayer meeting for just 30mins today from 7:00pm-7:30pm.\n"
                 "Today's meeting is not one you want to miss"
             )
             await application.bot.send_message(chat_id=user.chatId, text=message_text)

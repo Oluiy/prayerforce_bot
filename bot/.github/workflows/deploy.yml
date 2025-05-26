@@ -15,14 +15,25 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.13
+        python-version: '3.11'  # Railway supports 3.11 well
 
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip
-        pip install -r requirements.txt
+        python -m pip install --upgrade pip
+        pip install -r bot/requirements.txt
+        
+    - name: Generate Prisma Client
+      run: |
+        cd bot
+        pip install prisma
+        python -c "from prisma import Prisma; Prisma().generate()"
+
+    - name: Install Railway CLI
+      run: |
+        curl -fsSL https://railway.app/install.sh | sh
 
     - name: Deploy to Railway
-      uses: railwayapp/cli-action@v1
-      with:
-        railwayToken: ${{ secrets.RAILWAY_API_KEY }}
+      run: |
+        railway up
+      env:
+        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
