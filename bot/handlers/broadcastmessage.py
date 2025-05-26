@@ -1,7 +1,7 @@
 from telegram.ext import *
 from Prisma.prisma_connect import *
 from telegram.constants import ParseMode
-
+from datetime import datetime, timezone
 
 """Send a message to all users when the bot starts"""
 async def startup_broadcast(application: Application):
@@ -29,7 +29,40 @@ async def startup_broadcast(application: Application):
             print(f"Error sending message to {user.chatId}: {e}")
 
 
+"""Temporal message Preconference Prayers"""
+async def Broadcast(application: Application):
+    users = await db.user.find_many()
+
+    conference_date = datetime(2025, 6, 15, tzinfo=timezone.utc)  # Replace with actual date
+    days_left = (conference_date - datetime.now(timezone.utc)).days
+
+    for user in users:
+        try:
+            message = (
+                "🙏 Preconference Prayers 🙏\n\n"
+                f"{days_left} Days to Emerge Conference! \n\n"
+                "Dear Prayer Force, we are called to pray for the upcoming conference.\n"
+                "Join us in seeking God's guidance and blessings for this event.\n"
+                "Remember, the conference is not for all prayer force members, "
+            )
+            with open(
+                "/Users/israel/Documents/prayerforce_bot/bot/handlers/emerge.jpeg",
+                "rb",
+            ) as photo:
+                await application.bot.send_photo(
+                    chat_id=user.chatId,
+                    photo=photo,
+                    caption=message,
+                    parse_mode=ParseMode.MARKDOWN,
+                )
+
+        except Exception as e:
+            print(f"Error sending message to user {user.firstName} ({user.chatId}): {str(e)}")
+
+
 """Daily Recharge raminder to every user."""
+
+
 async def daily_recharge(application: Application):
     users = await db.user.find_many()
 
@@ -46,14 +79,14 @@ async def daily_recharge(application: Application):
 
 
 """Love Letter raminder to every user."""
+
+
 async def love_letter(application: Application):
     users = await db.user.find_many()
     for user in users:
         try:
             await application.bot.send_photo(
-                chat_id=user.chatId,
-                photo="",
-                ParseMode= ParseMode.MARKDOWN
+                chat_id=user.chatId, photo="", ParseMode=ParseMode.MARKDOWN
             )
 
         except Exception as e:

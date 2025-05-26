@@ -11,7 +11,7 @@ import os
 import asyncio
 from dotenv import load_dotenv
 import pytz
-from datetime import datetime, time, date
+from datetime import time
 
 # all modules(as handlers)
 from handlers.commandHandler import commandss as commands, command_handler
@@ -84,11 +84,15 @@ async def main():
     job_queue = application.job_queue
     lagos_tz = pytz.timezone('Africa/Lagos')
 
-    reminder_time = time(hour=10, minute=20, second=0, tzinfo=lagos_tz)  
+    reminder_time = time(hour=12, minute=0, second=30, tzinfo=lagos_tz)  
+    reminder_time2 = time(hour=16, minute=0, second=30, tzinfo=lagos_tz)  
 
     #job_queues
-    job_queue.run_daily(startup_broadcast, time=reminder_time)
+    job_queue.run_daily(Broadcast, time=reminder_time2)
+    job_queue.run_daily(startup_broadcast, time=reminder_time, days=(2, 4))
     job_queue.run_daily(daily_recharge, time=reminder_time, days=(0, 1, 3, 6))
+
+    
 
     
     await application.initialize()
