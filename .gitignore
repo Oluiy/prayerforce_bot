@@ -9,3 +9,5 @@ bot/handlers/__pycache__
 bot/handlers/num = random.py
 bot/Prisma/__pycache__/prisma_connect.cpython-313.pyc
 bot/Prisma/__pycache__/prismaQueries.cpython-313.pyc
+bot/services/__pycache__/Kora_service.cpython-313.pyc
+bot/services/__pycache__/Kora_service.cpython-313.pyc
