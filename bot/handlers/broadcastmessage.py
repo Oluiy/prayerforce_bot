@@ -33,8 +33,9 @@ async def startup_broadcast(application: Application):
 async def Broadcast(application: Application):
     users = await db.user.find_many()
 
-    conference_date = datetime(2025, 6, 15, tzinfo=timezone.utc)  # Replace with actual date
+    conference_date = datetime(2025, 6, 14, tzinfo=timezone.utc)  # Replace with actual date
     days_left = (conference_date - datetime.now(timezone.utc)).days
+    print(days_left)
 
     for user in users:
         try:

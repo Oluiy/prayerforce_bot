@@ -43,7 +43,7 @@ async def commands(app: Application):
         BotCommand("donate_button", "Show donation button")
     ]
 
-    await app.bot.set_my_commands(commands_list)
+    await app.bot.set_my_comands(commands_list)
 
 
 # Command handler functions for each command
@@ -79,5 +79,5 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Create command handlers
 command_handler = CommandHandler("commands", commands)
 history_handler = CommandHandler("history", history_command)
-sunday_meetings_handler = CommandHandler("Sunday_meetings", sunday_meetings_command)
-purchase_shirt_handler = CommandHandler("Purchase_shirt", purchase_shirt_command)
+sunday_meetings_handler = CommandHandler("meetings", sunday_meetings_command)
+purchase_shirt_handler = CommandHandler("merch", purchase_shirt_command)

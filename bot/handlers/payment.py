@@ -64,7 +64,7 @@ async def get_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await update.message.reply_text(
-            f"You're about to donate ₦{amount:.2f} to Prayer Force.\n\n"
+            f"You're about to donate ₦{format(amount, ",.2f")} to Prayer Force.\n\n"
             f"Email: {context.user_data['email']}\n"
             "Is this correct?",
             reply_markup=reply_markup
@@ -74,7 +74,7 @@ async def get_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     except ValueError:
         await update.message.reply_text(
-            "Please enter a valid amount (numbers only)."
+            "Please enter a valid amount (numbers only) --> no commas."
         )
         return AMOUNT
 
@@ -94,9 +94,8 @@ async def handle_payment_callback(update: Update, context: ContextTypes.DEFAULT_
         try:
             checkout_url, reference = kora_service.generate_payment_link(
                 amount=context.user_data['amount'],
-                name=user.full_name or f"{user.first_name} {user.last_name or ''}".strip(),
+                name=f"{user.first_name}".strip(),
                 email=context.user_data['email'],
-                description="Prayer Force Donation"
             )
         except Exception as e:
             print(f"Error in payment process: {str(e)}")

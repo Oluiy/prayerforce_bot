@@ -85,7 +85,7 @@ async def main():
     application.add_handler(annoucement_handler)
     application.add_handler(CallbackQueryHandler(handle_answer))
     application.add_handler(payment_conv_handler)
-    application.add_handler(CommandHandler("donate_button", send_payment_button))
+    application.add_handler(CommandHandler("universe", send_payment_button))
     application.add_handler(payment_button_handler)
 
     
@@ -97,7 +97,7 @@ async def main():
     lagos_tz = pytz.timezone('Africa/Lagos')
 
     reminder_time = time(hour=12, minute=0, second=30, tzinfo=lagos_tz)  
-    reminder_time2 = time(hour=16, minute=0, second=30, tzinfo=lagos_tz)  
+    reminder_time2 = time(hour=14, minute=40, second=0, tzinfo=lagos_tz)  
 
     #job_queues
     job_queue.run_daily(Broadcast, time=reminder_time2)
