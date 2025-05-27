@@ -14,11 +14,14 @@ import pytz
 from datetime import time
 
 # all modules(as handlers)
-from handlers.commandHandler import commandss as commands, command_handler
+# In your main.py
+from handlers.payment import payment_callback_handler
+from handlers.commandHandler import *
 from handlers.annoucement import annoucement_handler
 from handlers.query import conv_handler, handle_answer
 from Prisma.prisma_connect import db
 from handlers.broadcastmessage import *
+from handlers.payment import *
 
 # basic config
 logging.basicConfig(
@@ -74,8 +77,17 @@ async def main():
     application.add_handler(start_handler)
     application.add_handler(conv_handler)
     application.add_handler(command_handler)
+    application.add_handler(history_handler)  # Add this
+    application.add_handler(sunday_meetings_handler)  # Add this
+    application.add_handler(purchase_shirt_handler)
+    application.add_handler(payment_callback_handler)
+    application.add_handler(CallbackQueryHandler(handle_answer))  
     application.add_handler(annoucement_handler)
     application.add_handler(CallbackQueryHandler(handle_answer))
+    application.add_handler(payment_conv_handler)
+    application.add_handler(CommandHandler("donate_button", send_payment_button))
+    application.add_handler(payment_button_handler)
+
     
     # await create_questions()
     # await sync_users()

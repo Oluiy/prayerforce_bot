@@ -20,6 +20,7 @@ model User {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   userQuestions UserQuestion[]
+  payments   Payment[]  // Add this line to establish the relationship
 }
 
 model Question {
@@ -59,4 +60,18 @@ model UserQuestion {
   answeredAt   DateTime  @default(now())
   selectedOption Option? @relation(fields: [optionId], references: [id])
   optionId     Int?       
+}
+
+
+// Add to your schema.prisma file
+model Payment {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])  // Add this line
+  userId    Int      // Change from String to Int
+  reference String   @unique
+  amount    Float
+  status    String   @default("pending") // pending, completed, failed
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
