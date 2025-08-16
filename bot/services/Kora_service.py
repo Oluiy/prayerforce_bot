@@ -27,7 +27,7 @@ class KoraPayService:
             "currency": "NGN",
             "reference": reference,
             "notification_url": "https://your-webhook-url.com/kora-webhook",
-            "merchant_bears_cost": True,
+            "merchant_bears_cost": True, #It helps to decide who bears the charges of KoraPay, either the merchant or the customer
             "customer": {
                 "name": name,
                 "email": email
