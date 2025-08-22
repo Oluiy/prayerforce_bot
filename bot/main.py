@@ -95,7 +95,7 @@ async def main():
     #                 pattern="^(add_to_cart:|view_cart|checkout|back_to_menu|quantity_|add_item_to_cart|clear_cart)$"))
     # application.add_handler(CallbackQueryHandler(handle_payment_verification, pattern="^verify_payment:"))
 
-    await create_questions()
+    # await create_questions()
     # await sync_users()
     # await check_birthdays()
 

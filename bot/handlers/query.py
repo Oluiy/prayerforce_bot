@@ -98,8 +98,45 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not questions:
         await update.message.reply_text("No available question at the moment!")
         return ConversationHandler.END
+    
+    # Initialize session data if not exists
+    if "asked_questions" not in context.user_data:
+        context.user_data["asked_questions"] = set()
+        context.user_data["correct_count"] = 0
+        context.user_data["total_answered"] = 0
 
-    random_question = choice(questions)
+    asked_questions = context.user_data.get("asked_questions", set())
+
+    available_questions = [q for q in questions if q.id not in asked_questions]
+
+    if not available_questions:
+        total_answered = context.user_data.get("total_answered", 0)
+        correct_count = context.user_data.get("correct_count", 0)
+        failed_count = total_answered - correct_count
+        
+        completion_message = (
+            f"🎉 Quiz Complete!\n\n"
+            f"📊 Final Results:\n"
+            f"✅ Correct: {correct_count}\n"
+            f"❌ Failed: {failed_count}\n"
+            f"📝 Total Answered: {total_answered}\n\n"
+            f"Great job completing all questions!"
+        )
+        
+        # Send message using bot context to ensure it works regardless of update type
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=completion_message
+        )
+        
+        # Clear session data
+        context.user_data.pop("asked_questions", None)
+        context.user_data.pop("correct_count", None)
+        context.user_data.pop("total_answered", None)
+        return ConversationHandler.END
+    
+
+    random_question = choice(available_questions)
     options = random_question.options
     shuffle(options)
 
@@ -110,7 +147,14 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
             row.append(InlineKeyboardButton(text=opt.text, callback_data=str(opt.id)))
         keyboard.append(row)
 
+    keyboard.append([InlineKeyboardButton("Quit Quiz", callback_data="quit_quiz")])
+
     reply_markup = InlineKeyboardMarkup(keyboard)
+
+    context.user_data["current_question_id"] = random_question.id
+    asked_questions.add(random_question.id)
+    context.user_data["asked_questions"] = asked_questions
+
 
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -129,21 +173,49 @@ async def get_correct_option_text(question_id: int) -> str:
 
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()  # Important to answer the callback query
+    await query.answer() # Important to answer the callback query
+
+    if query.data == "quit_quiz":
+        # Get current stats
+        total_answered = context.user_data.get("total_answered", 0)
+        correct_count = context.user_data.get("correct_count", 0)
+        failed_count = total_answered - correct_count
+        
+        quiz_summary = (
+            f"🏁 Quiz Ended\n\n"
+            f"📊 Your Results:\n"
+            f"✅ Correct: {correct_count}\n"
+            f"❌ Failed: {failed_count}\n"
+            f"📝 Total Answered: {total_answered}\n\n"
+            f"Thanks for playing! 👋"
+        )
+        
+        await query.edit_message_text(quiz_summary)
+        
+        # Clear session data
+        context.user_data.pop("asked_questions", None)
+        context.user_data.pop("current_question_id", None)
+        context.user_data.pop("correct_count", None)
+        context.user_data.pop("total_answered", None)
+        return ConversationHandler.END
 
     option_id = query.data  # This is the ID we set earlier
     option = await db.option.find_unique(
         where={"id": int(option_id)}, include={"question": True}
     )
 
+    # Update counters
+    context.user_data["total_answered"] = context.user_data.get("total_answered", 0) + 1
+
     if option.isCorrect:
-        await query.edit_message_text("✅ Correct! You're a genius! 🚀")
+        context.user_data["correct_count"] = context.user_data.get("correct_count", 0) + 1
+        await query.edit_message_text("✅ Correct!")
     else:
         await query.edit_message_text(
             f"❌ Nope. The correct answer to *{option.question.text}* is: *{await get_correct_option_text(option.questionId)}*",
             parse_mode="Markdown",
         )
-    return ConversationHandler.END
+    return await ask_question(update, context)
 
 
 conv_handler = ConversationHandler(
