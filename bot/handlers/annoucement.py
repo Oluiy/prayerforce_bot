@@ -4,9 +4,9 @@ from telegram.ext import ContextTypes, CommandHandler
 async def announcement(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message_text = (
         "<b> 📣📣📣 Prayer Force Announcements 📣📣📣 </b>\n\n"
-        "1.<b>Daily Recharge: </b>Daily Recharge is a time to come fellowship \nwith the Holy Spirit "
+        "1.<b>Daily Recharge: </b>Daily Recharge is a time to come fellowship with the Holy Spirit "
         "and to be recharged, It holds from <b>Monday through Friday</b>\texcept on Wednesdays due to "
-        "Communion Service Time is from <code>7:00pm - 7:30pm</code>.\n\n"
+        "Communion Service. Time is from <code>7:00pm - 7:30pm</code>.\n\n"
         "2.<b>Office Prayers: </b>Office Prayers holds every <b>Wednesday</b> from <code>5:15pm - 5:45</code>"
         " before Communion Service.\n\n"
         "3.<b>Get Edified: </b>We\'ll be going before the Lord by 5:30pm today with hearts ready to seek Him. "

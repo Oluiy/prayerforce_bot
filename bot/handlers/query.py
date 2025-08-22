@@ -15,35 +15,80 @@ ASKING = 1  # answer to the question
 
 questions_with_options = [
     {
-        "text": "What year was prayer force established?",
+        "text": "What does the the greek word Katalambano mean",
         "options": [
-            {"text": "2003"},
-            {"text": "2002", "isCorrect": True},
-            {"text": "2001"},
-            {"text": "2005"},
+            {"text": "To seize", "isCorrect": True},
+            {"text": "To Generate"},
+            {"text": "To Glorify"},
+            {"text": "To Edify"},
         ],
     },
     {
-        "text": 'What was the name of "PrayerForce" when it was established?',
+        "text": "What day and time does get edified hold?",
         "options": [
-            {"text": "Dunamis", "isCorrect": True},
-            {"text": "Illuminos"},
-            {"text": "Prayer Unit"},
-            {"text": "Prayer Warriors"},
+            {"text": "Thursday, 5:30pm"},
+            {"text": "Friday, 5:35pm"},
+            {"text": "Sunday, 2:00pm"},
+            {"text": "Friday, 5:30pm", "isCorrect": True},
         ],
     },
+    {
+        "text": "Which verse in the Bible expounds on focus?",
+        "options": [
+            {"text": "Matthew 4:11"},
+            {"text": "Mark 1:23"},
+            {"text": "Luke 2:52"},
+            {"text": "Matthew 6:22", "isCorrect": True}
+        ]
+    },
+    {
+        "text": "Be not overcome of evil, but overcome evil with good.",
+        "options": [
+            {"text": "1 Samuel 4:11"},
+            {"text": "Romans 12:21", "isCorrect": True},
+            {"text": "1 Kings 1:23"},
+            {"text": "Hebrews 2:14"}
+        ]
+    },
+    {
+        "text": "Brain Teser😉 \nWhich African nation is the largest in land size",
+        "options": [
+            {"text": "Nigeria"},
+            {"text": "South Afirca"},
+            {"text": "Algeria", "isCorrect": True},
+            {"text": "Egypt"}
+        ]
+    },
+    {
+        "text": "Which Bible verses says \"God is Love❤️\"?",
+        "options": [
+            {"text": "1 John 4:8", "isCorrect": True},
+            {"text": "1 John 5:2"},
+            {"text": "2 John 1:7"},
+            {"text": "John 11:4"}
+        ]
+    },
+    {
+        "text": "God has given you🫵 POWER to tread upon serpents and scorpions and you shall not be hurt.",
+        "options": [
+            {"text": "Luke 10:24"},
+            {"text": "Luke 10:21"},
+            {"text": "Luke 10:19", "isCorrect": True},
+            {"text": "Romans 3:11"}
+        ]
+    }
 ]
 
-# async def create_questions():
-#     try:
-#         print("Creating questions...")
-#         for q in questions_with_options:
-#             question2 = await db.question.create(
-#                 data={"text": q["text"], "options": {"create": q["options"]}}
-#             )
-#             print(f"✅ Created question: {question2.text}")
-#     except Exception as e:
-#         print(f"❌ Failed to create questions: {e}")
+async def create_questions():
+    try:
+        print("Creating questions...")
+        for q in questions_with_options:
+            question2 = await db.question.create(
+                data={"text": q["text"], "options": {"create": q["options"]}}
+            )
+            print(f"✅ Created question: {question2.text}")
+    except Exception as e:
+        print(f"❌ Failed to create questions: {e}")
 
 
 async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -85,14 +85,17 @@ async def main():
     application.add_handler(payment_conv_handler)
     application.add_handler(CommandHandler("universe", send_payment_button))
     application.add_handler(payment_button_handler)
-    # application.add_handler(CommandHandler("merch", purchase_shirt_command))
     application.add_handler(CallbackQueryHandler(handle_answer, pattern="^\\d+$"))
+
+
+
+    # application.add_handler(CommandHandler("merch", purchase_shirt_command))
     # application.add_handler(checkout_conv_handler)
     # application.add_handler(CallbackQueryHandler(handle_cart_actions, 
     #                 pattern="^(add_to_cart:|view_cart|checkout|back_to_menu|quantity_|add_item_to_cart|clear_cart)$"))
     # application.add_handler(CallbackQueryHandler(handle_payment_verification, pattern="^verify_payment:"))
 
-    # await create_questions()
+    await create_questions()
     # await sync_users()
     # await check_birthdays()
 

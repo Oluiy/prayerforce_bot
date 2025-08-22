@@ -20,8 +20,8 @@ model User {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   userQuestions UserQuestion[]
-  payments   Payment[]  
-  cart       Cart?      // One-to-one relationship with Cart
+  // payments   Payment[]  
+  // cart       Cart?      // One-to-one relationship with Cart
 }
 
 model Question {
@@ -64,34 +64,34 @@ model UserQuestion {
 }
 
 // Add to your schema.prisma file
-model Payment {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])  // Add this line
-  userId    Int      // Change from String to Int
-  reference String   @unique
-  amount    Float
-  status    String   @default("pending") // pending, completed, failed
-  email     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// model Payment {
+//   id        Int      @id @default(autoincrement())
+//   user      User     @relation(fields: [userId], references: [id])  // Add this line
+//   userId    Int      // Change from String to Int
+//   reference String   @unique
+//   amount    Float
+//   status    String   @default("pending") // pending, completed, failed
+//   email     String
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
 
-model Cart {
-  id        Int        @id @default(autoincrement())
-  user      User       @relation(fields: [userId], references: [id])
-  userId    Int        @unique
-  items     CartItem[] // One-to-many relationship with CartItem
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
+// model Cart {
+//   id        Int        @id @default(autoincrement())
+//   user      User       @relation(fields: [userId], references: [id])
+//   userId    Int        @unique
+//   items     CartItem[] // One-to-many relationship with CartItem
+//   createdAt DateTime   @default(now())
+//   updatedAt DateTime   @updatedAt
+// }
 
-model CartItem {
-  id        Int      @id @default(autoincrement())
-  cart      Cart     @relation(fields: [cartId], references: [id])
-  cartId    Int
-  name      String   // Name of the item
-  price     Float    // Price of the item
-  quantity  Int      @default(1) // Quantity of the item
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+// model CartItem {
+//   id        Int      @id @default(autoincrement())
+//   cart      Cart     @relation(fields: [cartId], references: [id])
+//   cartId    Int
+//   name      String   // Name of the item
+//   price     Float    // Price of the item
+//   quantity  Int      @default(1) // Quantity of the item
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
