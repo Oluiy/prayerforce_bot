@@ -11,7 +11,7 @@ import os
 import asyncio
 from dotenv import load_dotenv
 import pytz
-from datetime import time
+from datetime import *
 
 # all modules(as handlers)
 # In your main.py
@@ -23,6 +23,7 @@ from handlers.query import *
 from Prisma.prisma_connect import db
 from handlers.broadcastmessage import *
 from handlers.payment import *
+from handlers.counsel import *
 
 # basic config
 logging.basicConfig(
@@ -77,6 +78,7 @@ async def main():
     start_handler = CommandHandler("start", start)
     application.add_handler(start_handler)
     application.add_handler(conv_handler)
+    application.add_handler(conv)
     # application.add_handler(personality_quiz_handler)  # Add personality quiz
     application.add_handler(command_handler)
     application.add_handler(history_handler)  # Add this
