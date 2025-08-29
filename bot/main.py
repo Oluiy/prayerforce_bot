@@ -19,6 +19,7 @@ from handlers.payment import payment_callback_handler
 from handlers.commandHandler import *
 from handlers.annoucement import annoucement_handler
 from handlers.query import *
+# from handlers.personality_quiz import personality_quiz_handler
 from Prisma.prisma_connect import db
 from handlers.broadcastmessage import *
 from handlers.payment import *
@@ -76,6 +77,7 @@ async def main():
     start_handler = CommandHandler("start", start)
     application.add_handler(start_handler)
     application.add_handler(conv_handler)
+    # application.add_handler(personality_quiz_handler)  # Add personality quiz
     application.add_handler(command_handler)
     application.add_handler(history_handler)  # Add this
     application.add_handler(sunday_meetings_handler)  # Add this
@@ -102,7 +104,7 @@ async def main():
     job_queue = application.job_queue
     lagos_tz = pytz.timezone('Africa/Lagos')
 
-    reminder_time = time(hour=22, minute=28, second=50, tzinfo=lagos_tz)  
+    reminder_time = time(hour=2, minute=5, second=50, tzinfo=lagos_tz)  
     reminder_time2 = time(hour=22, minute=28, second=50, tzinfo=lagos_tz)  
 
     #job_queues

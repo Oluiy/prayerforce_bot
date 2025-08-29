@@ -14,6 +14,7 @@ async def commands(app: Application):
         BotCommand("start", "Get to know Tefillah"),
         BotCommand("announcement", "To get all necessary annoucement"),
         BotCommand("question", "Random questions from the database"),
+        BotCommand("personality", "Take spiritual gifts assessment quiz"),
         BotCommand("history", "Want to know the history of Prayer Force?🙂 you can 'use the command'"),
         BotCommand("Sunday_meetings", "Pre-service and Post-service"),
         BotCommand("Purchase_shirt", "Want to purchase shirt or Dd or both?"),
