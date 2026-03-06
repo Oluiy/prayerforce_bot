@@ -1,0 +1,12 @@
+services:
+  - type: worker
+    name: prayerforce-bot
+    runtime: python
+    rootDir: bot
+    buildCommand: pip install -r requirements.txt && prisma generate --schema=database/schema.prisma && prisma py fetch
+    startCommand: python main.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PYTHONUNBUFFERED
+        value: "1"

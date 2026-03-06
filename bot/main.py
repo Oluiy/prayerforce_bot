@@ -83,16 +83,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ensuring the main application is running which power every other functionality of the bot
 async def main():
     print("Starting bot...")
-    
-    # Attempt to fetch Prisma binaries if missing
-    import subprocess
-    try:
-        print("Checking Prisma binaries...")
-        subprocess.run(["prisma", "py", "fetch"], check=True)
-        print("Prisma binaries fetched successfully.")
-    except Exception as e:
-        print(f"Warning: Failed to fetch Prisma binaries: {e}")
-
     try:
         print("Connecting to database...")
         await db.connect()
