@@ -1,31 +1,3 @@
-# from telegram.ext import Application, ConversationHandler, ContextTypes, CommandHandler
-# from telegram import BotCommand, Update
-
-
-# async def commands(app: Application):
-#     commands_list = [
-#         BotCommand("start", "Get to know Tefillah"),
-#         BotCommand("announcement", "To get all necessary annoucement"),
-#         BotCommand("question", "Random questions from the database"),
-#         BotCommand("history", "Want to know the history of Prayer Force?🙂 you can \'use the command\'"),
-#         BotCommand("Sunday-meetings","Pre-service and Post-service"),
-#         BotCommand("Purchase_shirt", "Want to purchase shirt or food or both?"),
-#         BotCommand("donate", "Make a donation to Prayer Force"),
-#         BotCommand("donate_button", "Show donation button")
-#     ]
-
-#     await app.bot.set_my_commands(commands_list)
-
-
-# async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-#     await context.bot.send_message(
-#         chat_id=update.effective_chat.id, text="Quiz cancelled."
-#     )
-#     return ConversationHandler.END
-
-
-# command_handler = CommandHandler("commands", commands)
-
 from telegram.ext import Application, ConversationHandler, ContextTypes, CommandHandler
 from telegram import BotCommand, Update
 
@@ -40,10 +12,11 @@ async def commands(app: Application):
         BotCommand("Sunday_meetings", "Pre-service and Post-service"),
         BotCommand("Purchase_shirt", "Want to purchase shirt or food or both?"),
         BotCommand("donate", "Make a donation to Prayer Force"),
-        BotCommand("donate_button", "Show donation button")
+        BotCommand("donate_button", "Show donation button"),
+        BotCommand("counsel", "Send a private counsel request"),
     ]
 
-    await app.bot.set_my_comands(commands_list)
+    await app.bot.set_my_commands(commands_list)
 
 
 # Command handler functions for each command

@@ -1,6 +1,6 @@
 from telegram import *
 from telegram.ext import *
-from Prisma.prisma_connect import db
+from database.prisma_connect import db
 import logging
 
 
@@ -9,7 +9,21 @@ logger = logging.getLogger(__name__)
 
 AWAITING_MESSAGE = range(1)
 
-COUNSELLOR_CHAT_IDS = [5352757845, 661560390]
+import os
+
+# Load from .env, expecting a comma-separated list of IDs
+counsellor_ids_str = os.getenv("COUNSELLOR_CHAT_IDS", "")
+try:
+    COUNSELLOR_CHAT_IDS = [int(id.strip()) for id in counsellor_ids_str.split(",") if id.strip()]
+except ValueError:
+    print("Warning: invalid COUNSELLOR_CHAT_IDS in .env, defaulting to empty list.")
+    COUNSELLOR_CHAT_IDS = []
+
+if not COUNSELLOR_CHAT_IDS:
+    # Default fallback for safety if env not set, though ideally it should be set
+    # Using the previously hardcoded ones as a fallback just in case
+    COUNSELLOR_CHAT_IDS = [5352757845, 661560390]
+    print(f"Using default COUNSELLOR_CHAT_IDS: {COUNSELLOR_CHAT_IDS}")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

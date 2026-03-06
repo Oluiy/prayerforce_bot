@@ -26,7 +26,7 @@ jobs:
       run: |
         cd bot
         pip install prisma
-        python -c "from prisma import Prisma; Prisma().generate()"
+        prisma generate --schema=database/schema.prisma
 
     - name: Deploy to Render
       uses: johnbeynon/render-deploy-action@v0.0.8

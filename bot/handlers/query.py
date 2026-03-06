@@ -8,7 +8,7 @@ from telegram.ext import (
     CallbackQueryHandler,
 )
 from handlers.commandHandler import cancel
-from Prisma.prisma_connect import db
+from database.prisma_connect import db
 
 ASKING = 1  # answer to the question
 
@@ -84,6 +84,13 @@ async def get_correct_option_text(question_id: int) -> str:
 
 async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    
+    # Check for valid integer ID (since options use IDs)
+    if not query.data.isdigit():
+        # If it's not a digit (e.g., 'view_leaderboard'), ignore it 
+        # so other handlers might pick it up, or just do nothing.
+        return 
+
     await query.answer()  # Important to answer the callback query
 
     option_id = query.data  # This is the ID we set earlier
@@ -104,7 +111,7 @@ async def handle_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
 conv_handler = ConversationHandler(
     entry_points=[CommandHandler("question", ask_question)],
     states={
-        ASKING: [CallbackQueryHandler(handle_answer)],
+        ASKING: [CallbackQueryHandler(handle_answer, pattern=r"^\d+$")],
     },
     fallbacks=[CommandHandler("cancel", cancel)],
     allow_reentry=True,

@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from bot.Prisma.prisma_connect import db
+from bot.database.prisma_connect import db
 from bot.handlers.birthdaymessage import send_birthday_message
 
 async def check_birthdays():

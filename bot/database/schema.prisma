@@ -1,0 +1,79 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-py"
+}
+
+model User {
+  id        String      @id @default(uuid())
+  chatId    String      @unique
+  firstName String?
+  lastName  String?
+  birthday  DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  payments  Payment[]
+  scores    UserScore[]
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Float
+  reference String
+  status    String
+  email     String?
+  createdAt DateTime @default(now())
+}
+
+model CounselRequest {
+  id            String    @id @default(uuid())
+  telegramId    Int
+  username      String?
+  phoneNumber   String?
+  message       String
+  responseDueAt DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model Question {
+  id        Int      @id @default(autoincrement())
+  text      String
+  options   Option[]
+  quizId    String?
+  quiz      Quiz?    @relation(fields: [quizId], references: [id])
+}
+
+model Option {
+  id         Int      @id @default(autoincrement())
+  text       String
+  isCorrect  Boolean  @default(false)
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id])
+}
+
+model Quiz {
+  id         String      @id @default(uuid())
+  weekStart  DateTime    @default(now())
+  isActive   Boolean     @default(false)
+  isClosed   Boolean     @default(false)
+  type       String      @default("weekly") // "weekly" or "monthly"
+  questions  Question[]
+  userScores UserScore[]
+}
+
+model UserScore {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  score     Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, quizId])
+}

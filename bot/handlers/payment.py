@@ -9,7 +9,7 @@ from telegram.ext import (
 )
 from telegram.constants import ParseMode
 from services.Kora_service import KoraPayService
-from Prisma.prisma_connect import db
+from database.prisma_connect import db
 
 # Conversation states
 EMAIL, AMOUNT, CONFIRM = range(3)

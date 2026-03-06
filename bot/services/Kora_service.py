@@ -26,13 +26,13 @@ class KoraPayService:
             "amount": str(amount),
             "currency": "NGN",
             "reference": reference,
-            "notification_url": "https://your-webhook-url.com/kora-webhook",
+            "notification_url": os.getenv("KORA_NOTIFICATION_URL", ""),
             "merchant_bears_cost": True,
             "customer": {
                 "name": name,
                 "email": email
             },
-            "redirect_url": "https://t.me/Tefillah_PF_bot",  # Redirect back to your bot
+            "redirect_url": os.getenv("KORA_REDIRECT_URL", "https://t.me/Tefillah_PF_bot"),  # Fallback to bot link
         }
         
         headers = {

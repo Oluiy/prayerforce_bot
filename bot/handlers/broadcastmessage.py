@@ -1,7 +1,10 @@
 from telegram.ext import *
-from Prisma.prisma_connect import *
+from database.prisma_connect import *
 from telegram.constants import ParseMode
 from datetime import datetime, timezone
+import os
+
+_HANDLERS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 """Send a message to all users when the bot starts"""
 async def startup_broadcast(application: Application):
@@ -16,7 +19,7 @@ async def startup_broadcast(application: Application):
                 "that today's meeting is not one you want to miss."
             )
             with open(
-                "/Users/israel/Documents/prayerforce_bot/bot/handlers/prayer.jpg", "+rb"
+                os.path.join(_HANDLERS_DIR, "prayer.jpg"), "rb"
             ) as photo:
                 await application.bot.send_photo(
                     chat_id=user.chatId,
@@ -47,8 +50,7 @@ async def Broadcast(application: Application):
                 "Remember, the conference is not for all prayer force members, "
             )
             with open(
-                "/Users/israel/Documents/prayerforce_bot/bot/handlers/emerge.jpeg",
-                "rb",
+                os.path.join(_HANDLERS_DIR, "emerge.jpeg"), "rb",
             ) as photo:
                 await application.bot.send_photo(
                     chat_id=user.chatId,

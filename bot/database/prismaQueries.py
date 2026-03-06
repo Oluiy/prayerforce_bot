@@ -1,4 +1,4 @@
-from Prisma.prisma_connect import * 
+from database.prisma_connect import * 
 from telegram import * 
 
 user = Update.effective_user

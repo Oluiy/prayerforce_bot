@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from bot.Prisma.prisma_connect import db
+from bot.database.prisma_connect import db
 # from modules.sheet_service import fetch_sheet_data
 from validate_data import validate_entries
 
