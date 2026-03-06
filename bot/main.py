@@ -1,4 +1,7 @@
 import logging
+import sys
+print(f"Script starting... Python version: {sys.version}")
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
