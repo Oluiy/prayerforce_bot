@@ -79,6 +79,7 @@ async def receive_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     #     logger.exception("Error saving counsel request: %s", e)
 
     # Notify counsellors
+    # Prepare phone info safely
     phone_line = f"*Phone:* {phone}\n" if phone else ""
     forward_text = (
         f"📩 *New counsel request*\n\n"
