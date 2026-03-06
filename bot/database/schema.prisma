@@ -5,6 +5,7 @@ datasource db {
 
 generator client {
   provider      = "prisma-client-py"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x"]
 }
 
 model User {
@@ -61,7 +62,7 @@ model Quiz {
   weekStart  DateTime    @default(now())
   isActive   Boolean     @default(false)
   isClosed   Boolean     @default(false)
-  type       String      @default("weekly") // "weekly" or "monthly"
+  type       String      @default("weekly") 
   questions  Question[]
   userScores UserScore[]
 }
