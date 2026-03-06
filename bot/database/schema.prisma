@@ -5,7 +5,6 @@ datasource db {
 
 generator client {
   provider      = "prisma-client-py"
-  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x", "rhel-openssl-3.0.x"]
 }
 
 model User {
