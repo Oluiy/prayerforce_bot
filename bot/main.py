@@ -79,8 +79,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ensuring the main application is running which power every other functionality of the bot
 async def main():
-    await db.connect()
+    print("Starting bot...")
+    try:
+        print("Connecting to database...")
+        await db.connect()
+        print("Database connected successfully!")
+    except Exception as e:
+        print(f"Failed to connect to database: {e}")
+        return
 
+    if not bot_token:
+        print("Error: TELEGRAM_BOT_TOKEN is not set.")
+        return
+
+    print("Building application...")
     application = ApplicationBuilder().token(bot_token).post_init(commands).build()
 
     # application handlers
@@ -128,9 +140,12 @@ async def main():
     job_queue.run_daily(open_weekly_quiz, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz), days=(6,))  # Opens Sunday 12 PM
     job_queue.run_daily(close_weekly_quiz, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz), days=(4,))  # Closes Friday 12 PM
 
+    print("Initializing application...")
     await application.initialize()
     await application.start()
+    print("Starting polling...")
     await application.updater.start_polling()
+    print("Bot is up and running! 🚀")
 
     try:
         # Keep the application running
@@ -138,7 +153,9 @@ async def main():
         await stop_signal.wait()
     finally:
         # Ensure we disconnect the database when stopping
+        print("Stopping bot...")
         await db.disconnect()
+        print("Bot stopped.")
 
 
 if __name__ == "__main__":
