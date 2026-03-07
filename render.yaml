@@ -3,12 +3,12 @@ services:
     name: prayerforce-bot
     runtime: python
     rootDir: bot
-    buildCommand: pip install -r requirements.txt && prisma generate --schema=database/schema.prisma && HOME=/opt/render/project/src prisma py fetch
-    startCommand: HOME=/opt/render/project/src prisma py fetch && python main.py
+    buildCommand: pip install -r requirements.txt && PRISMA_BINARY_CACHE_DIR=/opt/render/project/src/bot prisma generate --schema=database/schema.prisma && PRISMA_BINARY_CACHE_DIR=/opt/render/project/src/bot prisma py fetch
+    startCommand: python main.py
     envVars:
+      - key: PRISMA_BINARY_CACHE_DIR
+        value: /opt/render/project/src/bot
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: PYTHONUNBUFFERED
         value: "1"
-      - key: HOME
-        value: /opt/render/project/src
