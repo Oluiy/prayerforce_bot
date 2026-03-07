@@ -80,7 +80,8 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_
     options = question.options
     random.shuffle(options)
     
-    keyboard = [[KeyboardButton(opt.text)] for opt in options]
+    # Inline keyboard for answers
+    keyboard = [[InlineKeyboardButton(opt.text, callback_data=f"ans_{opt.id}")] for opt in options]
     
     keyboard_layout = []
     row = []
@@ -92,40 +93,103 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_
     if row:
         keyboard_layout.append(row)
         
+    reply_markup = InlineKeyboardMarkup(keyboard_layout)
+    base_text = f"Question {index + 1}/{len(questions)}:\n{question.text}"
+    text = f"{base_text}\n\n⏱️ You have 15 seconds to answer!"
+
     # Cancel any existing timer
     if "question_timer" in context.user_data and context.user_data["question_timer"]:
         context.user_data["question_timer"].schedule_removal()
         
-    await context.bot.send_message(
-        chat_id=chat_id,
-        text=f"Question {index + 1}/{len(questions)}:\n{question.text}\n\n⏱️ You have 15 seconds to answer!",
-        reply_markup=ReplyKeyboardMarkup(keyboard_layout, one_time_keyboard=True, resize_keyboard=True)
-    )
+    if update and update.callback_query:
+        # If continuing from a callback query, we can edit or send new msg
+        # Usually better to send a new message so previous question remains visible
+        msg = await context.bot.send_message(
+            chat_id=chat_id,
+            text=text,
+            reply_markup=reply_markup
+        )
+    else:
+        msg = await context.bot.send_message(
+            chat_id=chat_id,
+            text=text,
+            reply_markup=reply_markup
+        )
     
-    # Store the exact index this timer is for
     context.user_data["timer_for_index"] = index
     
-    # Schedule timeout
-    job = context.job_queue.run_once(question_timeout, 15, data={"chat_id": chat_id, "user_id": context.user_data.get("user_id", update.effective_user.id if update else None)}, chat_id=chat_id)
+    user_id_val = context.user_data.get("user_id")
+    if not user_id_val and update and update.effective_user:
+        user_id_val = update.effective_user.id
+        
+    # Schedule repeating countdown job (1 sec interval)
+    job = context.job_queue.run_repeating(
+        countdown_job, 
+        interval=1,
+        first=1,
+        data={
+            "chat_id": chat_id, 
+            "message_id": msg.message_id,
+            "user_id": user_id_val,
+            "base_text": base_text,
+            "reply_markup": reply_markup,
+            "time_left": 15,
+            "index": index
+        },
+        chat_id=chat_id,
+        user_id=int(user_id_val) if user_id_val else None
+    )
     context.user_data["question_timer"] = job
 
     return QUIZ_QUESTION
 
-async def question_timeout(context: ContextTypes.DEFAULT_TYPE):
+async def countdown_job(context: ContextTypes.DEFAULT_TYPE):
     job = context.job
-    chat_id = job.data["chat_id"]
+    data = job.data
+    chat_id = data["chat_id"]
+    message_id = data["message_id"]
+    time_left = data["time_left"] - 1
+    data["time_left"] = time_left
     
-    # Ensure this timeout still applies to the current question
-    index = context.user_data.get("current_index", 0)
-    timer_for_index = context.user_data.get("timer_for_index", -1)
-    
-    if index == timer_for_index:
-        await context.bot.send_message(chat_id=chat_id, text="⏰ Time's up for that question!")
+    if context.user_data is None:
+        job.schedule_removal()
+        return
+
+    # Verify index hasn't changed
+    current_index = context.user_data.get("current_index", 0)
+    if current_index != data["index"]:
+        job.schedule_removal()
+        return
+
+    if time_left > 0:
+        # Update UI every second
+        try:
+            await context.bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=f"{data['base_text']}\n\n⏱️ You have {time_left} seconds left!",
+                reply_markup=data["reply_markup"]
+            )
+        except Exception:
+            pass # Ignore if same message text or rate limit hits
+    else:
+        job.schedule_removal()
+        context.user_data["question_timer"] = None
         
+        # Time complete
+        try:
+            await context.bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=f"{data['base_text']}\n\n⏰ Time's up!",
+                reply_markup=None
+            )
+        except Exception:
+            pass
+
         # Move to next question
         context.user_data["current_index"] += 1
         
-        # We process the next question or finish quiz directly
         new_index = context.user_data["current_index"]
         questions = context.user_data.get("questions", [])
         
@@ -135,12 +199,16 @@ async def question_timeout(context: ContextTypes.DEFAULT_TYPE):
             await ask_question(None, context, chat_id=chat_id)
 
 async def handle_user_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer() # Ack the query
+    
+    user_answer_id = query.data.replace("ans_", "")
+    
     # Cancel existing timer
     if "question_timer" in context.user_data and context.user_data["question_timer"]:
         context.user_data["question_timer"].schedule_removal()
         context.user_data["question_timer"] = None
 
-    user_answer = update.message.text
     index = context.user_data.get("current_index", 0)
     questions = context.user_data.get("questions", [])
     
@@ -149,15 +217,21 @@ async def handle_user_answer(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     question = questions[index]
     
-    # Check answer
-    # We need to find if the selected text matches any correct option
+    # Identify correct option
     correct_option = next((opt for opt in question.options if opt.isCorrect), None)
     
-    if correct_option and user_answer == correct_option.text:
+    selected_option = next((opt for opt in question.options if str(opt.id) == user_answer_id), None)
+    
+    if correct_option and selected_option and str(selected_option.id) == str(correct_option.id):
         context.user_data["score"] += 1
-        await update.message.reply_text("✅ Correct!")
+        response_text = f"{question.text}\n\n✅ Correct! ({selected_option.text})"
     else:
-        await update.message.reply_text(f"❌ Wrong! The correct answer was: {correct_option.text if correct_option else 'Unknown'}")
+        response_text = f"{question.text}\n\n❌ Wrong! The correct answer was: {correct_option.text if correct_option else 'Unknown'}"
+        
+    try:
+        await query.edit_message_text(text=response_text, reply_markup=None)
+    except Exception:
+        pass
     
     context.user_data["current_index"] += 1
     return await ask_question(update, context)
@@ -187,7 +261,12 @@ async def finish_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_i
             )
     
     msg = f"Quiz finished! 🏆\nYour final score: {score}/{len(context.user_data.get('questions', []))}"
-    if update:
+    if update and update.callback_query:
+        await update.callback_query.edit_message_text(
+            text=msg,
+            reply_markup=None
+        )
+    elif update and update.message:
         await update.message.reply_text(
             msg,
             reply_markup=ReplyKeyboardRemove()
@@ -314,7 +393,7 @@ async def leaderboard_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 quiz_user_handler = ConversationHandler(
     entry_points=[CommandHandler("take_quiz", start_quiz_user)],
     states={
-        QUIZ_QUESTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_user_answer)]
+        QUIZ_QUESTION: [CallbackQueryHandler(handle_user_answer, pattern="^ans_")]
     },
     fallbacks=[CommandHandler("cancel", cancel_quiz_user)]
 )
