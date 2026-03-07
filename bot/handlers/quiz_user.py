@@ -61,31 +61,27 @@ async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["questions"] = questions
     context.user_data["current_index"] = 0
     context.user_data["score"] = 0
+    context.user_data["user_id"] = str(user.id)
     
     await update.message.reply_text(f"Starting the {quiz.type} quiz! You have {len(questions)} questions. Good luck!")
     return await ask_question(update, context)
 
-async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
+    if not chat_id:
+        chat_id = update.effective_chat.id
+    
     index = context.user_data["current_index"]
     questions = context.user_data["questions"]
     
     if index >= len(questions):
-        return await finish_quiz(update, context)
+        return await finish_quiz(update, context, chat_id=chat_id)
     
     question = questions[index]
     options = question.options
     random.shuffle(options)
     
-    # Store current options map to verify answer easily if needed, or just compare text
-    # Comparing text is easier for ReplyMarkup
-    
     keyboard = [[KeyboardButton(opt.text)] for opt in options]
-    # Arrange in 2 columns if possible? KeyboardButton doesn't support callback_data like Inline
-    # But ReplyMarkup is better for "chatty" quiz feel, or Inline for slicker feel.
-    # User requirement: "interactive interface".
-    # I'll stick to ReplyKeyboardMarkup as it's robust.
     
-    # 2 columns
     keyboard_layout = []
     row = []
     for btn in keyboard:
@@ -95,17 +91,62 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE):
             row = []
     if row:
         keyboard_layout.append(row)
-
-    await update.message.reply_text(
-        f"Question {index + 1}/{len(questions)}:\n{question.text}",
+        
+    # Cancel any existing timer
+    if "question_timer" in context.user_data and context.user_data["question_timer"]:
+        context.user_data["question_timer"].schedule_removal()
+        
+    await context.bot.send_message(
+        chat_id=chat_id,
+        text=f"Question {index + 1}/{len(questions)}:\n{question.text}\n\n⏱️ You have 15 seconds to answer!",
         reply_markup=ReplyKeyboardMarkup(keyboard_layout, one_time_keyboard=True, resize_keyboard=True)
     )
+    
+    # Store the exact index this timer is for
+    context.user_data["timer_for_index"] = index
+    
+    # Schedule timeout
+    job = context.job_queue.run_once(question_timeout, 15, data={"chat_id": chat_id, "user_id": context.user_data.get("user_id", update.effective_user.id if update else None)}, chat_id=chat_id)
+    context.user_data["question_timer"] = job
+
     return QUIZ_QUESTION
 
+async def question_timeout(context: ContextTypes.DEFAULT_TYPE):
+    job = context.job
+    chat_id = job.data["chat_id"]
+    
+    # Ensure this timeout still applies to the current question
+    index = context.user_data.get("current_index", 0)
+    timer_for_index = context.user_data.get("timer_for_index", -1)
+    
+    if index == timer_for_index:
+        await context.bot.send_message(chat_id=chat_id, text="⏰ Time's up for that question!")
+        
+        # Move to next question
+        context.user_data["current_index"] += 1
+        
+        # We process the next question or finish quiz directly
+        new_index = context.user_data["current_index"]
+        questions = context.user_data.get("questions", [])
+        
+        if new_index >= len(questions):
+            await finish_quiz(None, context, chat_id=chat_id)
+        else:
+            await ask_question(None, context, chat_id=chat_id)
+
 async def handle_user_answer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Cancel existing timer
+    if "question_timer" in context.user_data and context.user_data["question_timer"]:
+        context.user_data["question_timer"].schedule_removal()
+        context.user_data["question_timer"] = None
+
     user_answer = update.message.text
-    index = context.user_data["current_index"]
-    questions = context.user_data["questions"]
+    index = context.user_data.get("current_index", 0)
+    questions = context.user_data.get("questions", [])
+    
+    if index >= len(questions):
+        return await finish_quiz(update, context)
+
     question = questions[index]
     
     # Check answer
@@ -121,26 +162,47 @@ async def handle_user_answer(update: Update, context: ContextTypes.DEFAULT_TYPE)
     context.user_data["current_index"] += 1
     return await ask_question(update, context)
 
-async def finish_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    score = context.user_data["score"]
-    quiz_id = context.user_data["quiz_id"]
-    user = update.effective_user
+async def finish_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
+    if not chat_id and update:
+        chat_id = update.effective_chat.id
+        
+    score = context.user_data.get("score", 0)
+    quiz_id = context.user_data.get("quiz_id")
+    # For a scheduled job, update is None, we need user's ID to record score
+    # We should have stored user_id in context.user_data
+    user_id = context.user_data.get("user_id")
+    if not user_id and update:
+        user_id = str(update.effective_user.id)
     
     # Save score
-    db_user = await db.user.find_unique(where={"chatId": str(user.id)})
+    if user_id:
+        db_user = await db.user.find_unique(where={"chatId": str(user_id)})
+        if db_user:
+            await db.userscore.create(
+                data={
+                    "userId": db_user.id,
+                    "quizId": quiz_id,
+                    "score": score
+                }
+            )
     
-    await db.userscore.create(
-        data={
-            "userId": db_user.id,
-            "quizId": quiz_id,
-            "score": score
-        }
-    )
-    
-    await update.message.reply_text(
-        f"Quiz finished! 🏆\nYour final score: {score}/{len(context.user_data['questions'])}",
-        reply_markup=ReplyKeyboardRemove()
-    )
+    msg = f"Quiz finished! 🏆\nYour final score: {score}/{len(context.user_data.get('questions', []))}"
+    if update:
+        await update.message.reply_text(
+            msg,
+            reply_markup=ReplyKeyboardRemove()
+        )
+    else:
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text=msg,
+            reply_markup=ReplyKeyboardRemove()
+        )
+        
+    # Clear user data gracefully
+    if "question_timer" in context.user_data and context.user_data["question_timer"]:
+        context.user_data["question_timer"].schedule_removal()
+        
     return ConversationHandler.END
 
 async def cancel_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
