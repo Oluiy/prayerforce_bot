@@ -33,13 +33,16 @@ WAITING_NOTES = 1
 gemini_service = GeminiService()
 
 async def start_quiz_generation(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Security check: only admin
+    # Security check: only 1 explicit admin
     user = update.effective_user
     
+    # We restrict this to just the first admin in the set (the primary admin)
+    primary_admin_id = list(ADMIN_IDS)[0] if ADMIN_IDS else None
+    
     # Check against integer ID directly
-    if not user or user.id not in ADMIN_IDS:
-        print(f"Unauthorized access attempt by ID: {user.id if user else 'None'}, Authorized IDs: {ADMIN_IDS}")
-        await update.message.reply_text(f"You are not authorized to regenerate quizzes. Your ID is {user.id if user else 'Unknown'}")
+    if not user or user.id != primary_admin_id:
+        print(f"Unauthorized access attempt by ID: {user.id if user else 'None'}, Authorized Primary ID: {primary_admin_id}")
+        await update.message.reply_text(f"Only the primary admin is authorized to regenerate quizzes.")
         return ConversationHandler.END
 
     await update.message.reply_text("Please send the meeting notes for this week's quiz generation.")

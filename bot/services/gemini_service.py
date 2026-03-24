@@ -22,7 +22,7 @@ class GeminiService:
         }
         """
         prompt = f"""
-        You are an expert quiz generator. Based on the following family meeting notes, generate 20 multiple-choice questions.
+        You are an expert quiz generator. Based on the following family meeting notes, generate exactly 40 multiple-choice questions.
         The questions should be answerable from the text, but not too easy. They should test understanding.
         
         Notes:

@@ -1,96 +1,73 @@
-from telegram.ext import *
-from database.prisma_connect import *
-from telegram.constants import ParseMode
-from datetime import datetime, timezone
+from telegram import Update
+from telegram.ext import ContextTypes, CommandHandler, MessageHandler, filters, ConversationHandler
+from dotenv import load_dotenv
 import os
+from database.prisma_connect import db
+from telegram.constants import ParseMode
 
-_HANDLERS_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv()
+ADMIN_IDS_STR = os.getenv("ADMIN_IDS", "")
+ADMIN_ID_LEGACY = os.getenv("ADMIN_ID", "")
+ADMIN_IDS = set()
+for id_part in f"{ADMIN_IDS_STR},{ADMIN_ID_LEGACY}".split(","):
+    clean_id = id_part.strip()
+    if clean_id.isdigit():
+        ADMIN_IDS.add(int(clean_id))
 
-"""Send a message to all users when the bot starts"""
-async def startup_broadcast(application: Application):
+WAITING_BROADCAST_MESSAGE = 1
+
+async def start_manual_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    
+    # Restrict to admins
+    if not user or user.id not in ADMIN_IDS:
+        await update.message.reply_text("You are not authorized to broadcast messages.")
+        return ConversationHandler.END
+
+    await update.message.reply_text(
+        "Please send the message you want to broadcast to all users.\n\n"
+        "Send /cancel to abort."
+    )
+    return WAITING_BROADCAST_MESSAGE
+
+async def receive_broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message:
+        await update.message.reply_text("Please send a valid message.")
+        return WAITING_BROADCAST_MESSAGE
+        
+    status_msg = await update.message.reply_text("Broadcasting... Please wait.")
+    
     users = await db.user.find_many()
-
+    success_count = 0
+    fail_count = 0
+    
     for user in users:
         try:
-            message_text = (
-                "🙏 Prayer Force Update 🙏\n\n"
-                "We'll be going before the Lord by 5:30pm today with hearts ready to seek Him. "
-                "Tell a Prayer Force member to tell a Prayer Force member to tell another Prayer Force member "
-                "that today's meeting is not one you want to miss."
+            await context.bot.copy_message(
+                chat_id=user.chatId,
+                from_chat_id=update.message.chat_id,
+                message_id=update.message.message_id
             )
-            with open(
-                os.path.join(_HANDLERS_DIR, "prayer.jpg"), "rb"
-            ) as photo:
-                await application.bot.send_photo(
-                    chat_id=user.chatId,
-                    photo=photo,
-                    caption=message_text,
-                    parse_mode=ParseMode.MARKDOWN,
-                )
-
+            success_count += 1
         except Exception as e:
-            print(f"Error sending message to {user.chatId}: {e}")
+            print(f"Error sending broadcast to {user.chatId}: {e}")
+            fail_count += 1
+            
+    await status_msg.edit_text(
+        f"✅ Broadcast Complete!\n\n"
+        f"Successfully sent to: {success_count} users.\n"
+        f"Failed to send to: {fail_count} users."
+    )
+    return ConversationHandler.END
 
+async def cancel_broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Broadcast cancelled.")
+    return ConversationHandler.END
 
-"""Temporal message Preconference Prayers"""
-async def Broadcast(application: Application):
-    users = await db.user.find_many()
-
-    conference_date = datetime(2025, 6, 14, tzinfo=timezone.utc)  # Replace with actual date
-    days_left = (conference_date - datetime.now(timezone.utc)).days
-    print(days_left)
-
-    for user in users:
-        try:
-            message = (
-                "🙏 Preconference Prayers 🙏\n\n"
-                f"{days_left} Days to Emerge Conference! \n\n"
-                "Dear Prayer Force, we are called to pray for the upcoming conference.\n"
-                "Join us in seeking God's guidance and blessings for this event.\n"
-                "Remember, the conference is not for all prayer force members, "
-            )
-            with open(
-                os.path.join(_HANDLERS_DIR, "emerge.jpeg"), "rb",
-            ) as photo:
-                await application.bot.send_photo(
-                    chat_id=user.chatId,
-                    photo=photo,
-                    caption=message,
-                    parse_mode=ParseMode.MARKDOWN,
-                )
-
-        except Exception as e:
-            print(f"Error sending message to user {user.firstName} ({user.chatId}): {str(e)}")
-
-
-"""Daily Recharge raminder to every user."""
-
-
-async def daily_recharge(application: Application):
-    users = await db.user.find_many()
-
-    for user in users:
-        try:
-            message_text = (
-                "Daily Recharge 🥰🙏 !!!\n\n"
-                f"{user.firstName}, this is a personal reminder that we’ll be having our daily prayer meeting for just 30mins today from 7:00pm-7:30pm.\n"
-                "Today's meeting is not one you want to miss"
-            )
-            await application.bot.send_message(chat_id=user.chatId, text=message_text)
-        except Exception as e:
-            print(f"Error sending message to {user.chatId}: {e}")
-
-
-"""Love Letter raminder to every user."""
-
-
-async def love_letter(application: Application):
-    users = await db.user.find_many()
-    for user in users:
-        try:
-            await application.bot.send_photo(
-                chat_id=user.chatId, photo="", ParseMode=ParseMode.MARKDOWN
-            )
-
-        except Exception as e:
-            print(f"Error sending message to {user.chatId}: {e}")
+manual_broadcast_handler = ConversationHandler(
+    entry_points=[CommandHandler("broadcastmessage", start_manual_broadcast)],
+    states={
+        WAITING_BROADCAST_MESSAGE: [MessageHandler(filters.ALL & ~filters.COMMAND, receive_broadcast_message)],
+    },
+    fallbacks=[CommandHandler("cancel", cancel_broadcast)]
+)

@@ -7,7 +7,7 @@ async def commands(app: Application):
     commands_list = [
         BotCommand("start", "Get to know Tefillah"),
         BotCommand("announcement", "To get all necessary annoucement"),
-        BotCommand("question", "Random questions from the database"),
+        BotCommand("take_quiz", "Take the current active quiz"),
         BotCommand("history", "Want to know the history of Prayer Force?🙂 you can 'use the command'"),
         BotCommand("Sunday_meetings", "Pre-service and Post-service"),
         BotCommand("Purchase_shirt", "Want to purchase shirt or food or both?"),

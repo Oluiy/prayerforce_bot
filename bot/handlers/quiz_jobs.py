@@ -154,23 +154,16 @@ async def generate_monthly_recap(context: ContextTypes.DEFAULT_TYPE):
             print("No questions found for monthly recap.")
             return
 
-        # 2. Select random questions (e.g. 10)
         import random
-        # Ensure unique questions if duplicates exist (unlikely with ID but text content might be same?)
-        # Just pick 10 random
-        sample_size = min(len(all_questions), 15)
+        # Monthly recap should target 40 questions since weekly generates 40 
+        sample_size = min(len(all_questions), 40)
         selected_questions = random.sample(all_questions, sample_size)
         
-        # 3. Create new Monthly Quiz
-        # Note: We duplicate questions to the new quiz to keep history clean, 
-        # or we could link existing questions to the new quiz if Many-to-Many.
-        # Our schema has `quizId` in `Question`, suggesting One-to-Many.
-        # So we must duplicate questions for the monthly quiz.
         
         monthly_quiz = await db.quiz.create(
             data={
                 "weekStart": today,
-                "isActive": True, # Open immediately? Or waiting for scheduled time? User says "released on last day".
+                "isActive": True, 
                 "isClosed": False,
                 "type": "monthly"
             }

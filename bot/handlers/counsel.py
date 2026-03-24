@@ -20,9 +20,7 @@ except ValueError:
     COUNSELLOR_CHAT_IDS = []
 
 if not COUNSELLOR_CHAT_IDS:
-    # Default fallback for safety if env not set, though ideally it should be set
-    # Using the previously hardcoded ones as a fallback just in case
-    COUNSELLOR_CHAT_IDS = [5352757845, 661560390]
+    COUNSELLOR_CHAT_IDS = [5352757845]
     print(f"Using default COUNSELLOR_CHAT_IDS: {COUNSELLOR_CHAT_IDS}")
 
 

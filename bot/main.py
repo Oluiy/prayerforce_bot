@@ -22,14 +22,12 @@ from datetime import time
 
 # all modules(as handlers)
 # In your main.py
-from handlers.payment import payment_callback_handler
 from handlers.commandHandler import *
 from handlers.annoucement import annoucement_handler
-from handlers.query import conv_handler, handle_answer
 from handlers.counsel import conv as counsel_conv
 from handlers.quiz_admin import quiz_admin_handler
 from handlers.quiz_user import quiz_user_handler, leaderboard_handler, leaderboard_callback_handler
-from handlers.quiz_jobs import open_weekly_quiz, close_weekly_quiz
+from handlers.quiz_jobs import open_weekly_quiz, close_weekly_quiz, generate_monthly_recap
 from database.prisma_connect import db
 from handlers.broadcastmessage import *
 # from handlers.payment import *
@@ -101,14 +99,12 @@ async def main():
     # application handlers
     start_handler = CommandHandler("start", start)
     application.add_handler(start_handler)
-    application.add_handler(conv_handler)
     application.add_handler(command_handler)
     application.add_handler(history_handler)
     application.add_handler(sunday_meetings_handler)
     application.add_handler(purchase_shirt_handler)
-    application.add_handler(payment_callback_handler)
-    application.add_handler(CallbackQueryHandler(handle_answer, pattern=r"^\d+$"))
     application.add_handler(annoucement_handler)
+    application.add_handler(manual_broadcast_handler)
     # application.add_handler(CallbackQueryHandler(handle_answer)) # Removed duplicate
     # application.add_handler(payment_conv_handler)
     # application.add_handler(CommandHandler("universe", send_payment_button))
@@ -131,17 +127,20 @@ async def main():
     job_queue = application.job_queue
     lagos_tz = pytz.timezone("Africa/Lagos")
 
-    reminder_time = time(hour=15, minute=6, second=30, tzinfo=lagos_tz)
-    reminder_time2 = time(hour=15, minute=6, second=0, tzinfo=lagos_tz)
+    # reminder_time = time(hour=15, minute=6, second=30, tzinfo=lagos_tz)
+    # reminder_time2 = time(hour=15, minute=6, second=0, tzinfo=lagos_tz)
 
     # job_queues
-    job_queue.run_daily(Broadcast, time=reminder_time2)
-    job_queue.run_daily(startup_broadcast, time=reminder_time, days=(2, 4))
-    job_queue.run_daily(daily_recharge, time=reminder_time, days=(0, 1, 3, 6))
+    # job_queue.run_daily(Broadcast, time=reminder_time2)
+    # job_queue.run_daily(startup_broadcast, time=reminder_time, days=(2, 4))
+    # job_queue.run_daily(daily_recharge, time=reminder_time, days=(0, 1, 3, 6))
 
     # Weekly Quiz Scheduler
     job_queue.run_daily(open_weekly_quiz, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz), days=(6,))  # Opens Sunday 12 PM
     job_queue.run_daily(close_weekly_quiz, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz), days=(4,))  # Closes Friday 12 PM
+
+    # Monthly Recap Scheduler (Runs daily, but the job itself checks if it's the last day of the month)
+    job_queue.run_daily(generate_monthly_recap, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz))
 
     print("Initializing application...")
     await application.initialize()

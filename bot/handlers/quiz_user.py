@@ -7,9 +7,6 @@ QUIZ_QUESTION = 1
 
 async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    
-    # Check for active quiz
-    # We find the latest active quiz that is not closed
     quiz = await db.quiz.find_first(
         where={
             "isActive": True,
@@ -27,8 +24,6 @@ async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("The quiz seems to have no questions. Please contact admin.")
         return ConversationHandler.END
 
-    # Check if user already attempted this specific quiz
-    # First, ensure user exists in DB (sync might be needed or handled in start)
     db_user = await db.user.find_unique(where={"chatId": str(user.id)})
     if not db_user:
         # Create user if missing
@@ -54,8 +49,11 @@ async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
 
     # Initialize session
-    questions = quiz.questions
-    # Shuffle checks handled in display? No, let's shuffle options
+    all_questions = quiz.questions
+    
+    # Pick 20 random questions from the pool for exactly this user, so it varies
+    sample_size = min(len(all_questions), 20)
+    questions = random.sample(all_questions, sample_size)
     
     context.user_data["quiz_id"] = quiz.id
     context.user_data["questions"] = questions
@@ -63,7 +61,7 @@ async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["score"] = 0
     context.user_data["user_id"] = str(user.id)
     
-    await update.message.reply_text(f"Starting the {quiz.type} quiz! You have {len(questions)} questions. Good luck!")
+    await update.message.reply_text(f"Starting the {quiz.type} quiz! You'll be asked {len(questions)} random questions (from {len(all_questions)}). Good luck!")
     return await ask_question(update, context)
 
 async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
@@ -80,18 +78,8 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_
     options = question.options
     random.shuffle(options)
     
-    # Inline keyboard for answers
-    keyboard = [[InlineKeyboardButton(opt.text, callback_data=f"ans_{opt.id}")] for opt in options]
-    
-    keyboard_layout = []
-    row = []
-    for btn in keyboard:
-        row.append(btn[0])
-        if len(row) == 2:
-            keyboard_layout.append(row)
-            row = []
-    if row:
-        keyboard_layout.append(row)
+    # Inline keyboard for answers (1 item per row to ensure visibility of long text on all devices)
+    keyboard_layout = [[InlineKeyboardButton(opt.text, callback_data=f"ans_{opt.id}")] for opt in options]
         
     reply_markup = InlineKeyboardMarkup(keyboard_layout)
     base_text = f"Question {index + 1}/{len(questions)}:\n{question.text}"
@@ -100,27 +88,42 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_
     # Cancel any existing timer
     if "question_timer" in context.user_data and context.user_data["question_timer"]:
         context.user_data["question_timer"].schedule_removal()
-        
-    if update and update.callback_query:
-        # If continuing from a callback query, we can edit or send new msg
-        # Usually better to send a new message so previous question remains visible
-        msg = await context.bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=reply_markup
-        )
-    else:
-        msg = await context.bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            reply_markup=reply_markup
-        )
+        context.user_data["question_timer"] = None
     
     context.user_data["timer_for_index"] = index
     
     user_id_val = context.user_data.get("user_id")
     if not user_id_val and update and update.effective_user:
         user_id_val = update.effective_user.id
+        
+    # Get previous result string to append if existing
+    prev_result = context.user_data.get("prev_result", "")
+    if prev_result:
+        base_text = f"{prev_result}\n\n{base_text}"
+        text = f"{base_text}\n\n⏱️ You have 15 seconds to answer!"
+        # clear so it doesn't show next time
+        context.user_data["prev_result"] = ""
+
+    # Re-use the existing message ID if possible, instead of sending a new one every time
+    last_msg_id = context.user_data.get("quiz_msg_id")
+
+    msg = None
+    if last_msg_id and update and getattr(update, 'callback_query', None):
+        # We can just edit the existing message
+        try:
+            msg = await context.bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=last_msg_id,
+                text=text,
+                reply_markup=reply_markup
+            )
+        except Exception:
+            pass
+            
+    if not msg:
+        # Fallback to sending new if edit fails or if it's the first question
+        msg = await context.bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
+        context.user_data["quiz_msg_id"] = msg.message_id
         
     # Schedule repeating countdown job (1 sec interval)
     job = context.job_queue.run_repeating(
@@ -216,10 +219,7 @@ async def handle_user_answer(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return await finish_quiz(update, context)
 
     question = questions[index]
-    
-    # Identify correct option
     correct_option = next((opt for opt in question.options if opt.isCorrect), None)
-    
     selected_option = next((opt for opt in question.options if str(opt.id) == user_answer_id), None)
     
     if correct_option and selected_option and str(selected_option.id) == str(correct_option.id):
@@ -242,13 +242,10 @@ async def finish_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_i
         
     score = context.user_data.get("score", 0)
     quiz_id = context.user_data.get("quiz_id")
-    # For a scheduled job, update is None, we need user's ID to record score
-    # We should have stored user_id in context.user_data
     user_id = context.user_data.get("user_id")
     if not user_id and update:
         user_id = str(update.effective_user.id)
     
-    # Save score
     if user_id:
         db_user = await db.user.find_unique(where={"chatId": str(user_id)})
         if db_user:
@@ -278,7 +275,6 @@ async def finish_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_i
             reply_markup=ReplyKeyboardRemove()
         )
         
-    # Clear user data gracefully
     if "question_timer" in context.user_data and context.user_data["question_timer"]:
         context.user_data["question_timer"].schedule_removal()
         
@@ -289,7 +285,6 @@ async def cancel_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 async def get_leaderboard_content():
-    # 1. Try to find the latest CLOSED quiz
     quiz = await db.quiz.find_first(
         where={
             "isClosed": True
@@ -300,7 +295,6 @@ async def get_leaderboard_content():
     title_suffix = "(Final)"
 
     if not quiz:
-        # 2. Fallback: Check for an ACTIVE quiz instead (for ongoing monitoring/testing)
         quiz = await db.quiz.find_first(
             where={
                 "isActive": True
@@ -361,7 +355,6 @@ async def leaderboard_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     if query.data == "view_leaderboard":
         content = await get_leaderboard_content()
         if content:
-             # Show a pop-up alert with the top 3 (to keep it short enough for alert)
             lines = content.split('\n')
             
             popup_text = "🎉 Current Standings! 🎉\n\n"
@@ -375,14 +368,12 @@ async def leaderboard_callback(update: Update, context: ContextTypes.DEFAULT_TYP
             if count == 0:
                  popup_text += "No scores yet!"
 
-            # Show the alert (pop-up)
             try:
                 await query.answer(text=popup_text, show_alert=True)
             except Exception as e:
                 print(f"Error showing alert: {e}")
                 await query.answer() # Fallback
 
-            # Update the original message with the full list
             await query.edit_message_text(text=content, parse_mode="Markdown")
         else:
              await query.answer(text="Leaderboard unavailable", show_alert=True)
