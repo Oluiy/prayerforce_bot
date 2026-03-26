@@ -24,7 +24,7 @@ from datetime import time
 # In your main.py
 from handlers.commandHandler import *
 from handlers.annoucement import annoucement_handler
-from handlers.counsel import conv as counsel_conv
+from handlers.counsel import pr_request 
 from handlers.quiz_admin import quiz_admin_handler
 from handlers.quiz_user import quiz_user_handler, leaderboard_handler, leaderboard_callback_handler
 from handlers.quiz_jobs import open_weekly_quiz, close_weekly_quiz, generate_monthly_recap
@@ -105,6 +105,7 @@ async def main():
     application.add_handler(purchase_shirt_handler)
     application.add_handler(annoucement_handler)
     application.add_handler(manual_broadcast_handler)
+    application.add_handler(pr_request)
     # application.add_handler(CallbackQueryHandler(handle_answer)) # Removed duplicate
     # application.add_handler(payment_conv_handler)
     # application.add_handler(CommandHandler("universe", send_payment_button))
@@ -115,7 +116,7 @@ async def main():
     application.add_handler(leaderboard_callback_handler)
     # application.add_handler(open_weekly_quiz)
     # application.add_handler(close_weekly_quiz)
-    application.add_handler(counsel_conv)
+    # application.add_handler(counsel_conv)
     application.add_handler(
         MessageHandler(filters.TEXT & filters.Regex(r"start"), start)
     )

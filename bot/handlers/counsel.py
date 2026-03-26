@@ -27,6 +27,21 @@ if not COUNSELLOR_CHAT_IDS:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Hi — use /counsel to send a private counsel request.")
 
+# description: Hava a prayer request, let us pray with you 
+async def let_us_pray_with_you(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [[InlineKeyboardButton("Let us pray with you", callback_data="prayer_request", url="https://bit.ly/LetUsPrayWithYou")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if update.message:
+        await update.message.reply_text("Do you have a prayer request? Click the button below to share it with our prayer team, and we'll pray with you! 🙏", reply_markup=reply_markup)
+    elif update.callback_query:
+        await update.callback_query.message.reply_text("Do you have a prayer request? Click the button below to share it with our prayer team, and we'll pray with you! 🙏", reply_markup=reply_markup)
+
+async def prayer_request(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    await query.edit_message_text(f"Please send your prayer request to {https://bit.ly/LetUsPrayWithYou}")
+
 
 async def counsel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     kb = [
@@ -101,12 +116,14 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 
-conv = ConversationHandler(
-    entry_points=[CommandHandler("counsel", counsel_command)],
-    states={
-        AWAITING_MESSAGE: [MessageHandler(filters.TEXT | filters.CONTACT, receive_message)]
-    },
-    fallbacks=[CommandHandler("cancel", cancel)],
-    per_user=True,
-    per_chat=True
-)
+
+pr_request = CommandHandler("prayer_request", let_us_pray_with_you)
+# conv = ConversationHandler(
+#     entry_points=[],
+#     states={
+#         AWAITING_MESSAGE: [MessageHandler(filters.TEXT | filters.CONTACT, receive_message)]
+#     },
+#     fallbacks=[CommandHandler("cancel", cancel)],
+#     per_user=True,
+#     per_chat=True
+# )

@@ -10,10 +10,7 @@ async def commands(app: Application):
         BotCommand("take_quiz", "Take the current active quiz"),
         BotCommand("history", "Want to know the history of Prayer Force?🙂 you can 'use the command'"),
         BotCommand("Sunday_meetings", "Pre-service and Post-service"),
-        BotCommand("Purchase_shirt", "Want to purchase shirt or food or both?"),
-        BotCommand("donate", "Make a donation to Prayer Force"),
-        BotCommand("donate_button", "Show donation button"),
-        BotCommand("counsel", "Send a private counsel request"),
+        BotCommand("prayer_request", "Send a private prayer request"),
     ]
 
     await app.bot.set_my_commands(commands_list)
@@ -29,8 +26,8 @@ async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def sunday_meetings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Our Sunday meetings schedule:\n\n"
-        "1. Pre-service Prayer: 7:00 AM - 7:45 AM\n"
-        "2. Post-service Prayer: 12:00 PM - 1:00 PM"
+        "1. Pre-service Prayer: 7:00 AM - 7:30 AM\n"
+        "2. Post-service Prayer: 8:05 AM - 8:35 AM"
     )
 
 async def purchase_shirt_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
