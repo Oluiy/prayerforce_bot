@@ -137,25 +137,20 @@ async def main():
 
     # Weekly Quiz Scheduler
     job_queue.run_daily(open_weekly_quiz, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz), days=(6,))  # Opens Sunday 12 PM
-    job_queue.run_daily(close_weekly_quiz, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz), days=(4,))  # Closes Friday 12 PM
+    job_queue.run_daily(close_weekly_quiz, time=time(hour=18, minute=0, second=0, tzinfo=lagos_tz), days=(5,))  # Closes Friday 6 PM
 
     # Monthly Recap Scheduler (Runs daily, but the job itself checks if it's the last day of the month)
     job_queue.run_daily(generate_monthly_recap, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz))
 
-    print("Initializing application...")
     await application.initialize()
     await application.start()
-    print("Starting polling...")
     await application.updater.start_polling()
     print("Bot is up and running! 🚀")
 
     try:
-        # Keep the application running
         stop_signal = asyncio.Event()
         await stop_signal.wait()
     finally:
-        # Ensure we disconnect the database when stopping
-        print("Stopping bot...")
         await db.disconnect()
         print("Bot stopped.")
 

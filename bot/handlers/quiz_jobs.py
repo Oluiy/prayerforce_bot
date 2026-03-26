@@ -65,10 +65,7 @@ async def close_weekly_quiz(context: ContextTypes.DEFAULT_TYPE):
             "userScores": {
                 "include": {
                     "user": True
-                },
-                # Ordering nested relations is tricky in Prisma Python depending on version,
-                # so we might fetch and sort manually or use separate query if needed.
-                # But let's try a separate query for robustness below.
+                }
             } 
         }
     )

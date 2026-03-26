@@ -29,9 +29,8 @@ async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def sunday_meetings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Our Sunday meetings schedule:\n\n"
-        "Pre-service Prayer: 8:00 AM - 9:00 AM\n"
-        "Main Service: 9:30 AM - 11:30 AM\n"
-        "Post-service Prayer: 12:00 PM - 1:00 PM"
+        "1. Pre-service Prayer: 7:00 AM - 7:45 AM\n"
+        "2. Post-service Prayer: 12:00 PM - 1:00 PM"
     )
 
 async def purchase_shirt_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

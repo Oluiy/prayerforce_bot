@@ -51,7 +51,7 @@ async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Initialize session
     all_questions = quiz.questions
     
-    # Pick 20 random questions from the pool for exactly this user, so it varies
+    # Pick 20 random questions from the pool for exactly this user
     sample_size = min(len(all_questions), 20)
     questions = random.sample(all_questions, sample_size)
     
@@ -61,7 +61,7 @@ async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["score"] = 0
     context.user_data["user_id"] = str(user.id)
     
-    await update.message.reply_text(f"Starting the {quiz.type} quiz! You'll be asked {len(questions)} random questions (from {len(all_questions)}). Good luck!")
+    await update.message.reply_text(f"Starting the {quiz.type} quiz! You'll be asked {len(questions)} questions. Good luck!")
     return await ask_question(update, context)
 
 async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id=None):
