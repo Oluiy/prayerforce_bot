@@ -11,6 +11,7 @@ async def commands(app: Application):
         BotCommand("history", "Want to know the history of Prayer Force?🙂 you can 'use the command'"),
         BotCommand("Sunday_meetings", "Pre-service and Post-service"),
         BotCommand("prayer_request", "Send a private prayer request"),
+        BotCommand("share_testimony", "Share your testimony with the family"),
     ]
 
     await app.bot.set_my_commands(commands_list)

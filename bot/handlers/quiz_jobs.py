@@ -17,8 +17,6 @@ async def open_weekly_quiz(context: ContextTypes.DEFAULT_TYPE):
         return
     
     # Find the pending quiz created recently
-    # We look for a quiz created recently which is not active yet
-    # Assuming "weekStart" is the creation time approximately
     quiz = await db.quiz.find_first(
         where={
             "isActive": False,
