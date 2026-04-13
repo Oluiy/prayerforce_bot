@@ -52,7 +52,7 @@ async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     all_questions = quiz.questions
     
     # Pick 20 random questions from the pool for exactly this user
-    sample_size = min(len(all_questions), 20)
+    sample_size = min(len(all_questions), 12)
     questions = random.sample(all_questions, sample_size)
     
     context.user_data["quiz_id"] = quiz.id
