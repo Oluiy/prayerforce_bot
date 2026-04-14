@@ -1,6 +1,7 @@
 from telegram import Update, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, ConversationHandler, CallbackQueryHandler
 from database.prisma_connect import db
+import datetime
 import random
 
 QUIZ_QUESTION = 1
@@ -285,26 +286,42 @@ async def cancel_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return ConversationHandler.END
 
 async def get_leaderboard_content():
+    """
+    Returns the leaderboard content for the CURRENT active quiz.
+    If no quiz is active, returns None to trigger "No quiz taken" state.
+    """
+    # Strictly fetch the currently active quiz to keep weekly data isolated.
     quiz = await db.quiz.find_first(
         where={
-            "isClosed": True
+            "isActive": True
         },
         order={"weekStart": "desc"}
     )
-
-    title_suffix = "(Final)"
+    
+    title_suffix = "(Live)"
 
     if not quiz:
+        # If no quiz is active (e.g., between Friday close and Sunday open), 
+        # check for the most recently CLOSED quiz to show 'Final' results 
+        # UNTIL the Sunday 12:00 AM wipe.
         quiz = await db.quiz.find_first(
             where={
-                "isActive": True
+                "isClosed": True
             },
             order={"weekStart": "desc"}
         )
-        title_suffix = "(Live)"
-
-    if not quiz:
-        return None
+        
+        if quiz:
+            # Check if this quiz belongs to the CURRENT week. 
+            # If it's older than 7 days, it's 'wiped'.
+            now = datetime.datetime.now()
+            days_since_start = (now - quiz.weekStart).days
+            if days_since_start >= 7:
+                 return None # No table shown for old weeks
+            
+            title_suffix = "(Final)"
+        else:
+            return None # No quiz found at all
 
     # Fetch top 10 scores
     top_scores = await db.userscore.find_many(
@@ -315,7 +332,8 @@ async def get_leaderboard_content():
     )
 
     if not top_scores:
-        return f"Leaderboard is empty for {quiz.type} quiz."
+        # Return none to show no table if no one has participated yet
+        return None 
 
     leaderboard_msg = f"🏆 *Leaderboard {title_suffix}* 🏆\n\n"
     medals = ["🥇", "🥈", "🥉"]
@@ -332,19 +350,20 @@ async def get_leaderboard_content():
 
 async def view_leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Shows a teaser for the leaderboard with a button to view details.
+    Shows the leaderboard content directly or an empty state message.
     """
     content = await get_leaderboard_content()
     
     if not content:
-        await update.message.reply_text("No quizzes found for the leaderboard.")
+        # If no quiz taken or between cycles, show empty state message
+        await update.message.reply_text("🏆 *Leaderboard Update*\n\nNo active quiz leaderboard currently. New quiz results will appear after Sunday 12:00 AM!", parse_mode="Markdown")
         return
 
-    keyboard = [[InlineKeyboardButton("View Leaderboard 📜", callback_data="view_leaderboard")]]
+    keyboard = [[InlineKeyboardButton("View Details 📜", callback_data="view_leaderboard")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        "🏆 *Leaderboard Update!* 🏆\n\nTap the button below to see who's leading the charts! 👇",
+        "🏆 *Leaderboard Update!* 🏆\n\nTap the button below to see who's leading! 👇",
         reply_markup=reply_markup,
         parse_mode="Markdown"
     )

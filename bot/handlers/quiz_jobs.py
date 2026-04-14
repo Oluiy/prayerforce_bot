@@ -4,9 +4,20 @@ from database.prisma_connect import db
 import datetime
 import pytz
 
+async def reset_weekly_leaderboard(context: ContextTypes.DEFAULT_TYPE):
+    """
+    Clears the leaderboard by ensuring old scores from previous weeks 
+    are no longer being surfaced. 
+    (Managed by get_leaderboard_content in quiz_user.py filtering for active quizzes).
+    Separately, this job can perform actual data cleanup if desired, but 
+    filtering is safer for record keeping.
+    """
+    print("Weekly leaderboard reset period reached.")
+    # No manual deletion needed if we use the filter 'isActive=True' in user queries.
+
 async def open_weekly_quiz(context: ContextTypes.DEFAULT_TYPE):
     """
-    Opens the weekly quiz on Sunday at 12:00 PM.
+    Opens the weekly quiz on Sunday at 12:00 AM.
     """
     print("Running open_weekly_quiz job...")
 

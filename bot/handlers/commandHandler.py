@@ -9,7 +9,9 @@ async def commands(app: Application):
         BotCommand("announcement", "To get all necessary annoucement"),
         BotCommand("take_quiz", "Take the current active quiz"),
         BotCommand("history", "Want to know the history of Prayer Force?🙂 you can 'use the command'"),
-        BotCommand("Sunday_meetings", "Pre-service and Post-service"),
+        BotCommand("meetings", "Pre-service and Post-service"),
+        BotCommand("merch", "Want to purchase shirt or food or both?"),
+        BotCommand("leaderboard", "View quiz leaderboard"),
         BotCommand("prayer_request", "Send a private prayer request"),
         BotCommand("share_testimony", "Share your testimony with the family"),
     ]
