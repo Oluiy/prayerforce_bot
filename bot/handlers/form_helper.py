@@ -3,8 +3,6 @@ from telegram.ext import *
 from database.prisma_connect import db
 import logging
 
-
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # description: Hava a prayer request, let us pray with you 

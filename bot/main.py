@@ -36,8 +36,13 @@ from handlers.broadcastmessage import *
 
 # basic config
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO, force=True
 )
+
+# Avoid logging raw Telegram request URLs that include the bot token.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("telegram.request").setLevel(logging.WARNING)
 
 load_dotenv()
 bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -59,11 +64,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         userInfo = user_exist
-
-    print(
-        f"User Info → ID: {user.id}, Username: @{user.username}, Full Name: {user.full_name}"
-    )
-
+        
     user_firstname = update.effective_user.first_name
     # userio = update.effective_user.full_name
     await context.bot.send_message(

@@ -118,7 +118,7 @@ async def close_weekly_quiz(context: ContextTypes.DEFAULT_TYPE):
                 parse_mode="Markdown"
             )
         except Exception as e:
-            print(f"Failed to send leaderboard to {user.chatId}: {e}")
+            print(f"Failed to send leaderboard to {user.firstName}: {e}")
 
 async def generate_monthly_recap(context: ContextTypes.DEFAULT_TYPE):
     """

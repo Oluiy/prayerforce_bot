@@ -50,7 +50,7 @@ async def receive_broadcast_message(update: Update, context: ContextTypes.DEFAUL
             )
             success_count += 1
         except Exception as e:
-            print(f"Error sending broadcast to {user.chatId}: {e}")
+            print(f"Error sending broadcast to {user.firstName}: {e}")
             fail_count += 1
             
     await status_msg.edit_text(

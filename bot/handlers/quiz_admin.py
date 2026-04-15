@@ -27,7 +27,6 @@ for id_part in all_ids_str.split(","):
     if clean_id.isdigit():
         ADMIN_IDS.add(int(clean_id))
 
-print(f"Loaded Admin IDs: {ADMIN_IDS}")
 
 WAITING_NOTES = 1
 gemini_service = GeminiService()
@@ -41,7 +40,6 @@ async def start_quiz_generation(update: Update, context: ContextTypes.DEFAULT_TY
     
     # Check against integer ID directly
     if not user or user.id != primary_admin_id:
-        print(f"Unauthorized access attempt by ID: {user.id if user else 'None'}, Authorized Primary ID: {primary_admin_id}")
         await update.message.reply_text(f"Only the primary admin is authorized to regenerate quizzes.")
         return ConversationHandler.END
 
