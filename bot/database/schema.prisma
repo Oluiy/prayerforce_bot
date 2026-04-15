@@ -75,6 +75,7 @@ model UserScore {
   quizId    String
   quiz      Quiz     @relation(fields: [quizId], references: [id])
   score     Int
+  timeTakenSeconds Int @default(0)
   createdAt DateTime @default(now())
 
   @@unique([userId, quizId])

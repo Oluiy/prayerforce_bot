@@ -6,6 +6,11 @@ import random
 
 QUIZ_QUESTION = 1
 
+
+def format_duration(total_seconds: int) -> str:
+    minutes, seconds = divmod(max(0, int(total_seconds)), 60)
+    return f"{minutes} min {seconds} sec"
+
 async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     quiz = await db.quiz.find_first(
@@ -61,6 +66,7 @@ async def start_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["current_index"] = 0
     context.user_data["score"] = 0
     context.user_data["user_id"] = str(user.id)
+    context.user_data["quiz_started_at"] = datetime.datetime.now().timestamp()
     
     await update.message.reply_text(f"Starting the {quiz.type} quiz! You'll be asked {len(questions)} questions. Good luck!")
     return await ask_question(update, context)
@@ -244,6 +250,12 @@ async def finish_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_i
     score = context.user_data.get("score", 0)
     quiz_id = context.user_data.get("quiz_id")
     user_id = context.user_data.get("user_id")
+    quiz_started_at = context.user_data.get("quiz_started_at")
+    elapsed_seconds = 0
+
+    if quiz_started_at:
+        elapsed_seconds = max(1, int(datetime.datetime.now().timestamp() - float(quiz_started_at)))
+
     if not user_id and update:
         user_id = str(update.effective_user.id)
     
@@ -254,11 +266,16 @@ async def finish_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_i
                 data={
                     "userId": db_user.id,
                     "quizId": quiz_id,
-                    "score": score
+                    "score": score,
+                    "timeTakenSeconds": elapsed_seconds,
                 }
             )
     
-    msg = f"Quiz finished! 🏆\nYour final score: {score}/{len(context.user_data.get('questions', []))}"
+    msg = (
+        f"Quiz finished! 🏆\n"
+        f"Your final score: {score}/{len(context.user_data.get('questions', []))}\n"
+        f"⏱️ Total time: {format_duration(elapsed_seconds)}"
+    )
     if update and update.callback_query:
         await update.callback_query.edit_message_text(
             text=msg,
@@ -323,13 +340,17 @@ async def get_leaderboard_content():
         else:
             return None # No quiz found at all
 
-    # Fetch top 10 scores
-    top_scores = await db.userscore.find_many(
+    # Fetch scores and apply tie-break sorting in Python:
+    # higher score ranks first, and when score ties, lower time ranks higher.
+    all_scores = await db.userscore.find_many(
         where={"quizId": quiz.id},
         include={"user": True},
-        order={"score": "desc"},
-        take=10
     )
+
+    top_scores = sorted(
+        all_scores,
+        key=lambda entry: (-entry.score, entry.timeTakenSeconds if entry.timeTakenSeconds is not None else 10**9)
+    )[:10]
 
     if not top_scores:
         # Return none to show no table if no one has participated yet
@@ -342,7 +363,8 @@ async def get_leaderboard_content():
         user_name = entry.user.firstName
         if entry.user.lastName:
             user_name += f" {entry.user.lastName}"
-        leaderboard_msg += f"{medal} {user_name}: {entry.score} pts\n"
+        time_text = format_duration(entry.timeTakenSeconds or 0)
+        leaderboard_msg += f"{medal} {user_name}: {entry.score} pts ({time_text})\n"
     
     leaderboard_msg += "\n🎁 The winner gets their gift at the next family meeting!"
     
