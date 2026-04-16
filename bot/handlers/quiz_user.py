@@ -350,13 +350,13 @@ async def get_leaderboard_content():
     top_scores = sorted(
         all_scores,
         key=lambda entry: (-entry.score, entry.timeTakenSeconds if entry.timeTakenSeconds is not None else 10**9)
-    )[:10]
+    )[:10] # possibly chagnge it to top 15 or show all scores.
 
     if not top_scores:
         # Return none to show no table if no one has participated yet
         return None 
 
-    leaderboard_msg = f"🏆 *Leaderboard {title_suffix}* 🏆\n\n"
+    leaderboard_msg = f"🏆 Leaderboard {title_suffix} 🏆\n\n"
     medals = ["🥇", "🥈", "🥉"]
     for idx, entry in enumerate(top_scores):
         medal = medals[idx] if idx < 3 else f"{idx+1}."
@@ -415,7 +415,7 @@ async def leaderboard_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 print(f"Error showing alert: {e}")
                 await query.answer() # Fallback
 
-            await query.edit_message_text(text=content, parse_mode="Markdown")
+            await query.edit_message_text(text=content)
         else:
              await query.answer(text="Leaderboard unavailable", show_alert=True)
     else:
