@@ -305,59 +305,40 @@ async def cancel_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def get_leaderboard_content(quiz_id=None):
     """
     Returns leaderboard content for a specific quiz if quiz_id is provided.
-    Otherwise, falls back to the current week's active or closed quiz.
+    Otherwise, falls back to the most recent quiz (active or closed within 7 days).
     """
     quiz = None
     title_suffix = "(Live)"
 
     if quiz_id:
+        # 1. User clicked the "View Results" button (ID is perfectly known)
         quiz = await db.quiz.find_unique(where={"id": quiz_id})
         if not quiz:
             return None
         title_suffix = "(Final)" if quiz.isClosed and not quiz.isActive else "(Live)"
     else:
-        now = datetime.datetime.now()
-
-        # Calculate THIS WEEK's Sunday (weekStart reference point)
-        # weekday(): Mon=0, Tue=1, ..., Sat=5, Sun=6
-        # To get Sunday: go back (weekday() + 1) % 7 days
-        days_back = (now.weekday() + 1) % 7
-        current_week_sunday = now - datetime.timedelta(days=days_back)
-        current_week_sunday = current_week_sunday.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        # Next week's Sunday (upper boundary)
-        next_week_sunday = current_week_sunday + datetime.timedelta(days=7)
-
-        # Fetch the currently active quiz from THIS WEEK
+        # 2. User typed /leaderboard command (We must find the most recent quiz)
         quiz = await db.quiz.find_first(
             where={
-                "isActive": True,
-                "weekStart": {
-                    "gte": current_week_sunday,
-                    "lt": next_week_sunday
-                }
+                "OR": [{"isActive": True}, {"isClosed": True}]
             },
-            order={"weekStart": "desc"}
+            order={"weekStart": "desc"} # Get newest quiz regardless of status
         )
 
         if not quiz:
-            # If no active quiz, check for a CLOSED quiz from THIS WEEK only
-            quiz = await db.quiz.find_first(
-                where={
-                    "isClosed": True,
-                    "weekStart": {
-                        "gte": current_week_sunday,
-                        "lt": next_week_sunday
-                    }
-                },
-                order={"weekStart": "desc"}
-            )
+            return None
 
-            if quiz:
-                title_suffix = "(Final)"
-            else:
-                # No quiz from current week available
-                return None
+        if quiz.isActive:
+            title_suffix = "(Live)"
+        else:
+            # It's closed. Keep it visible ONLY if it's less than 7 days old.
+            # After 7 days, it's considered "past week" and disappears.
+            now = datetime.datetime.now()
+            days_since_start = (now - quiz.weekStart).days
+            if days_since_start >= 7:
+                 return None # Too old, hide it!
+            
+            title_suffix = "(Final)"
 
     # Fetch scores and apply tie-break sorting in Python:
     # higher score ranks first, and when score ties, lower time ranks higher.
