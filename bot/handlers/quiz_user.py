@@ -333,7 +333,7 @@ async def get_leaderboard_content(quiz_id=None):
         else:
             # It's closed. Keep it visible ONLY if it's less than 7 days old.
             # After 7 days, it's considered "past week" and disappears.
-            now = datetime.datetime.now()
+            now = datetime.datetime.now(datetime.timezone.utc)
             days_since_start = (now - quiz.weekStart).days
             if days_since_start >= 7:
                  return None # Too old, hide it!
