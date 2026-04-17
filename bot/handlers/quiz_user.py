@@ -304,13 +304,30 @@ async def cancel_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_leaderboard_content():
     """
-    Returns the leaderboard content for the CURRENT active quiz.
-    If no quiz is active, returns None to trigger "No quiz taken" state.
+    Returns the leaderboard content for the CURRENT week's quiz only.
+    Shows active quizzes or recently closed quizzes from the current week.
+    Week starts on Sunday, ends on Saturday.
     """
-    # Strictly fetch the currently active quiz to keep weekly data isolated.
+    now = datetime.datetime.now()
+    
+    # Calculate THIS WEEK's Sunday (weekStart reference point)
+    # weekday(): Mon=0, Tue=1, ..., Sat=5, Sun=6
+    # To get Sunday: go back (weekday() + 1) % 7 days
+    days_back = (now.weekday() + 1) % 7
+    current_week_sunday = now - datetime.timedelta(days=days_back)
+    current_week_sunday = current_week_sunday.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Next week's Sunday (upper boundary)
+    next_week_sunday = current_week_sunday + datetime.timedelta(days=7)
+    
+    # Fetch the currently active quiz from THIS WEEK
     quiz = await db.quiz.find_first(
         where={
-            "isActive": True
+            "isActive": True,
+            "weekStart": {
+                "gte": current_week_sunday,
+                "lt": next_week_sunday
+            }
         },
         order={"weekStart": "desc"}
     )
@@ -318,27 +335,23 @@ async def get_leaderboard_content():
     title_suffix = "(Live)"
 
     if not quiz:
-        # If no quiz is active (e.g., between Friday close and Sunday open), 
-        # check for the most recently CLOSED quiz to show 'Final' results 
-        # UNTIL the Sunday 12:00 AM wipe.
+        # If no active quiz, check for a CLOSED quiz from THIS WEEK only
         quiz = await db.quiz.find_first(
             where={
-                "isClosed": True
+                "isClosed": True,
+                "weekStart": {
+                    "gte": current_week_sunday,
+                    "lt": next_week_sunday
+                }
             },
             order={"weekStart": "desc"}
         )
         
         if quiz:
-            # Check if this quiz belongs to the CURRENT week. 
-            # If it's older than 7 days, it's 'wiped'.
-            now = datetime.datetime.now()
-            days_since_start = (now - quiz.weekStart).days
-            if days_since_start >= 7:
-                 return None # No table shown for old weeks
-            
             title_suffix = "(Final)"
         else:
-            return None # No quiz found at all
+            # No quiz from current week available
+            return None
 
     # Fetch scores and apply tie-break sorting in Python:
     # higher score ranks first, and when score ties, lower time ranks higher.
@@ -350,10 +363,10 @@ async def get_leaderboard_content():
     top_scores = sorted(
         all_scores,
         key=lambda entry: (-entry.score, entry.timeTakenSeconds if entry.timeTakenSeconds is not None else 10**9)
-    )[:10] # possibly chagnge it to top 15 or show all scores.
+    )[:10]
 
     if not top_scores:
-        # Return none to show no table if no one has participated yet
+        # Return none if no one has participated yet
         return None 
 
     leaderboard_msg = f"🏆 Leaderboard {title_suffix} 🏆\n\n"
