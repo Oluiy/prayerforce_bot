@@ -302,43 +302,36 @@ async def cancel_quiz_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Quiz cancelled.", reply_markup=ReplyKeyboardRemove())
     return ConversationHandler.END
 
-async def get_leaderboard_content():
+async def get_leaderboard_content(quiz_id=None):
     """
-    Returns the leaderboard content for the CURRENT week's quiz only.
-    Shows active quizzes or recently closed quizzes from the current week.
-    Week starts on Sunday, ends on Saturday.
+    Returns leaderboard content for a specific quiz if quiz_id is provided.
+    Otherwise, falls back to the current week's active or closed quiz.
     """
-    now = datetime.datetime.now()
-    
-    # Calculate THIS WEEK's Sunday (weekStart reference point)
-    # weekday(): Mon=0, Tue=1, ..., Sat=5, Sun=6
-    # To get Sunday: go back (weekday() + 1) % 7 days
-    days_back = (now.weekday() + 1) % 7
-    current_week_sunday = now - datetime.timedelta(days=days_back)
-    current_week_sunday = current_week_sunday.replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    # Next week's Sunday (upper boundary)
-    next_week_sunday = current_week_sunday + datetime.timedelta(days=7)
-    
-    # Fetch the currently active quiz from THIS WEEK
-    quiz = await db.quiz.find_first(
-        where={
-            "isActive": True,
-            "weekStart": {
-                "gte": current_week_sunday,
-                "lt": next_week_sunday
-            }
-        },
-        order={"weekStart": "desc"}
-    )
-    
+    quiz = None
     title_suffix = "(Live)"
 
-    if not quiz:
-        # If no active quiz, check for a CLOSED quiz from THIS WEEK only
+    if quiz_id:
+        quiz = await db.quiz.find_unique(where={"id": quiz_id})
+        if not quiz:
+            return None
+        title_suffix = "(Final)" if quiz.isClosed and not quiz.isActive else "(Live)"
+    else:
+        now = datetime.datetime.now()
+
+        # Calculate THIS WEEK's Sunday (weekStart reference point)
+        # weekday(): Mon=0, Tue=1, ..., Sat=5, Sun=6
+        # To get Sunday: go back (weekday() + 1) % 7 days
+        days_back = (now.weekday() + 1) % 7
+        current_week_sunday = now - datetime.timedelta(days=days_back)
+        current_week_sunday = current_week_sunday.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # Next week's Sunday (upper boundary)
+        next_week_sunday = current_week_sunday + datetime.timedelta(days=7)
+
+        # Fetch the currently active quiz from THIS WEEK
         quiz = await db.quiz.find_first(
             where={
-                "isClosed": True,
+                "isActive": True,
                 "weekStart": {
                     "gte": current_week_sunday,
                     "lt": next_week_sunday
@@ -346,12 +339,25 @@ async def get_leaderboard_content():
             },
             order={"weekStart": "desc"}
         )
-        
-        if quiz:
-            title_suffix = "(Final)"
-        else:
-            # No quiz from current week available
-            return None
+
+        if not quiz:
+            # If no active quiz, check for a CLOSED quiz from THIS WEEK only
+            quiz = await db.quiz.find_first(
+                where={
+                    "isClosed": True,
+                    "weekStart": {
+                        "gte": current_week_sunday,
+                        "lt": next_week_sunday
+                    }
+                },
+                order={"weekStart": "desc"}
+            )
+
+            if quiz:
+                title_suffix = "(Final)"
+            else:
+                # No quiz from current week available
+                return None
 
     # Fetch scores and apply tie-break sorting in Python:
     # higher score ranks first, and when score ties, lower time ranks higher.
@@ -406,8 +412,13 @@ async def view_leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def leaderboard_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     
-    if query.data == "view_leaderboard":
-        content = await get_leaderboard_content()
+    if query.data.startswith("view_leaderboard"):
+        quiz_id = None
+        parts = query.data.split("_", 2)
+        if len(parts) == 3:
+            quiz_id = parts[2]
+
+        content = await get_leaderboard_content(quiz_id=quiz_id)
         if content:
             lines = content.split('\n')
             
@@ -444,4 +455,4 @@ quiz_user_handler = ConversationHandler(
 )
 
 leaderboard_handler = CommandHandler("leaderboard", view_leaderboard)
-leaderboard_callback_handler = CallbackQueryHandler(leaderboard_callback, pattern="^view_leaderboard$")
+leaderboard_callback_handler = CallbackQueryHandler(leaderboard_callback, pattern="^view_leaderboard(_.*)?$")

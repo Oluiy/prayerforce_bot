@@ -104,7 +104,7 @@ async def close_weekly_quiz(context: ContextTypes.DEFAULT_TYPE):
     quiz_title = f"Weekly Quiz ({active_quiz.weekStart.strftime('%Y-%m-%d')})"
     teaser_text = "🏆 *Weekly Quiz Closed!* 🏆\n\nThe results are in! Tap the button below to see who won! 👇"
     
-    keyboard = [[InlineKeyboardButton("View Results 📜", callback_data="view_leaderboard")]]
+    keyboard = [[InlineKeyboardButton(f"View Results 📜", callback_data=f"view_leaderboard_{active_quiz.id}")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # 4. Broadcast to all users
