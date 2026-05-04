@@ -10,15 +10,16 @@ generator client {
   binaryTargets        = ["native", "debian-openssl-3.0.x"]
 }
 model User {
-  id        String      @id @default(uuid())
-  chatId    String      @unique
-  firstName String?
-  lastName  String?
-  birthday  DateTime?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  payments  Payment[]
-  scores    UserScore[]
+  id                   String                  @id @default(uuid())
+  chatId               String                  @unique
+  firstName            String?
+  lastName             String?
+  birthday             DateTime?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  payments             Payment[]
+  scores               UserScore[]
+  cumulativeMonthly    DailyQuizCumulative[]
 }
 
 model Payment {
@@ -63,20 +64,33 @@ model Quiz {
   weekStart  DateTime    @default(now())
   isActive   Boolean     @default(false)
   isClosed   Boolean     @default(false)
-  type       String      @default("weekly") 
+  type       String      @default("daily") 
   questions  Question[]
   userScores UserScore[]
 }
 
 model UserScore {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  quizId    String
-  quiz      Quiz     @relation(fields: [quizId], references: [id])
-  score     Int
-  timeTakenSeconds Int @default(0)
-  createdAt DateTime @default(now())
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  quizId            String
+  quiz              Quiz     @relation(fields: [quizId], references: [id])
+  score             Int
+  timeTakenSeconds  Int      @default(0)
+  createdAt         DateTime @default(now())
 
   @@unique([userId, quizId])
+}
+
+model DailyQuizCumulative {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  timeTakenSeconds Int  @default(0)
+  monthYear   String   // Format: "2026-05" to group by month
+  cumulativeScore Int  @default(0)
+  totalQuizzesCompleted Int @default(0)
+  lastUpdated DateTime @default(now()) @updatedAt
+
+  @@unique([userId, monthYear])
 }

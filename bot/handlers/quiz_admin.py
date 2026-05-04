@@ -101,14 +101,14 @@ async def receive_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Save to DB (Manual transaction for stability)
         print(f"DEBUG: Quiz Data: {questions_data}")
         
-        try:
-            # Create a new weekly quiz (initially inactive, to be opened on Sunday)
+        try: #Change type to "daily/weekly/monthly" based on the quiz being generated, how often it will be opened, and when it will be opened
+            # Create a new daily quiz (initially inactive, to be opened on Sunday)
             quiz = await db.quiz.create(
                 data={
                     "weekStart": datetime.datetime.now(),
-                    "isActive": True, # Opens Sunday
+                    "isActive": True, # Opens daily
                     "isClosed": False,
-                    "type": "weekly"
+                    "type": "daily"
                 }
             )
 

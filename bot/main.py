@@ -29,7 +29,7 @@ from handlers.annoucement import annoucement_handler
 from handlers.form_helper import pr_request, testimony_request
 from handlers.quiz_admin import quiz_admin_handler
 from handlers.quiz_user import quiz_user_handler, leaderboard_handler, leaderboard_callback_handler
-from handlers.quiz_jobs import open_weekly_quiz, close_weekly_quiz, generate_monthly_recap
+from handlers.quiz_jobs import open_weekly_quiz, close_weekly_quiz, generate_monthly_recap, open_daily_quiz, close_daily_quiz, send_monthly_cumulative_leaderboard
 from database.prisma_connect import db
 from handlers.broadcastmessage import *
 # from handlers.payment import *
@@ -136,6 +136,13 @@ async def main():
     # Weekly Quiz Scheduler
     job_queue.run_daily(open_weekly_quiz, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz), days=(6,))  # Opens Sunday 12 PM
     job_queue.run_daily(close_weekly_quiz, time=time(hour=19, minute=0, second=0, tzinfo=lagos_tz), days=(5,))  # Closes Friday 6 PM
+
+    # Daily Quiz Scheduler
+    job_queue.run_daily(open_daily_quiz, time=time(hour=8, minute=0, second=0, tzinfo=lagos_tz))  # Opens every day at 8 AM
+    job_queue.run_daily(close_daily_quiz, time=time(hour=23, minute=0, second=0, tzinfo=lagos_tz))  # Closes every day at 11 PM
+    
+    # Monthly Cumulative Leaderboard (Runs daily at 11:30 PM, only sends on last day of month)
+    job_queue.run_daily(send_monthly_cumulative_leaderboard, time=time(hour=23, minute=30, second=0, tzinfo=lagos_tz))
 
     # Monthly Recap Scheduler (Runs daily, but the job itself checks if it's the last day of the month)
     job_queue.run_daily(generate_monthly_recap, time=time(hour=12, minute=0, second=0, tzinfo=lagos_tz))
