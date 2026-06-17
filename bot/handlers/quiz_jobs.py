@@ -5,6 +5,9 @@ import datetime
 import pytz
 
 
+#necessary changes will be made today.
+
+
 async def reset_weekly_leaderboard(context: ContextTypes.DEFAULT_TYPE):
     """
     Clears the leaderboard by ensuring old scores from previous weeks
