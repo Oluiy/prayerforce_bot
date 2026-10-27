@@ -9,6 +9,7 @@ generator client {
   recursive_type_depth = 5
   binaryTargets        = ["native", "debian-openssl-3.0.x"]
 }
+
 model User {
   id                   String                  @id @default(uuid())
   chatId               String                  @unique
