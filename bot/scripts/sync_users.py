@@ -1,32 +1,28 @@
+"""Import members from the Google Sheet. Run from the bot/ folder: python -m scripts.sync_users"""
 import asyncio
 from datetime import datetime
-from bot.database.prisma_connect import db
-# from modules.sheet_service import fetch_sheet_data
-from validate_data import validate_entries
+
+from database.prisma_connect import db
+from repositories import user_repository
+from services.sheets_service import fetch_sheet_data
+from utils.validation import validate_entries
+
 
 async def sync_users():
     await db.connect()
-    sheet_data = fetch_sheet_data()
-    valid_users = validate_entries(sheet_data)
+    try:
+        for entry in validate_entries(fetch_sheet_data()):
+            chat_id = entry["ChatId"]
+            if not await user_repository.get_by_chat_id(chat_id):
+                await user_repository.create(
+                    chat_id,
+                    entry["FirstName"],
+                    entry["LastName"],
+                    birthday=datetime.strptime(entry["Birthday"], "%Y-%m-%d"),
+                )
+    finally:
+        await db.disconnect()
 
-    for entry in valid_users:
-        chat_id = entry["ChatId"]
-        first_name = entry["FirstName"]
-        last_name = entry["LastName"]
-        birthday = datetime.strptime(entry["Birthday"], "%Y-%m-%d")
-
-        existing = await db.user.find_unique(where={"chatId": chat_id})
-        if not existing:
-            await db.user.create(
-                data={
-                    "chatId": str(chat_id),
-                    "firstName": first_name,
-                    "lastName": last_name,
-                    "birthday": birthday
-                }
-            )
-
-    await db.disconnect()
 
 if __name__ == "__main__":
     asyncio.run(sync_users())
