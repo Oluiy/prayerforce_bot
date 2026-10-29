@@ -1,5 +1,6 @@
 from datetime import datetime
 
+
 def is_valid_date(date_string: str) -> bool:
     try:
         datetime.strptime(date_string, "%Y-%m-%d")
@@ -7,9 +8,7 @@ def is_valid_date(date_string: str) -> bool:
     except ValueError:
         return False
 
+
 def validate_entries(entries):
-    valid_entries = []
-    for entry in entries:
-        if entry["ChatId"] and is_valid_date(entry["Birthday"]):
-            valid_entries.append(entry)
-    return valid_entries
+    """Keep sheet rows that have a ChatId and a YYYY-MM-DD Birthday."""
+    return [entry for entry in entries if entry["ChatId"] and is_valid_date(entry["Birthday"])]
