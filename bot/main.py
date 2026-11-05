@@ -9,6 +9,7 @@ from database.prisma_connect import db
 from handlers import register_handlers
 from handlers.menu import set_bot_commands
 from jobs import schedule_jobs
+from services import settings_service
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,9 @@ async def main():
     except Exception as e:
         logger.error("Failed to connect to database: %s", e)
         return
+
+    # Admin-changed settings decide the job times, so load them first.
+    await settings_service.load()
 
     application = (
         ApplicationBuilder().token(settings.telegram_bot_token).post_init(set_bot_commands).build()

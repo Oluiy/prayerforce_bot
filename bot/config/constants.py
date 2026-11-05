@@ -6,6 +6,13 @@ import pytz
 # --- General -----------------------------------------------------------------
 TIMEZONE = pytz.timezone("Africa/Lagos")
 
+# --- Meeting times and prices (defaults; admins change these via /settings) --
+PRE_SERVICE_TIME = "7:00 AM - 7:30 AM"
+POST_SERVICE_TIME = "8:05 AM - 8:35 AM"
+ANNOUNCEMENT_TIME = "5:30pm"
+TSHIRT_PRICE = "₦5,000"
+JOURNAL_PRICE = "₦3,500"
+
 # --- External links ----------------------------------------------------------
 PRAYER_REQUEST_URL = "https://bit.ly/LetUsPrayWithYou"
 TESTIMONY_FORM_URL = "https://forms.gle/btif8k48fPW9Lh6g7"
@@ -42,8 +49,9 @@ DEFAULT_QUIZ_CLOSE_TIME = time(hour=23, minute=0)
 # How often the sweep checks for quizzes due to open or close.
 SCHEDULE_SWEEP_SECONDS = 60
 
-# --- Recurring job times (all times in TIMEZONE) -----------------------------
+# --- Recurring job times (defaults; admins change these via /settings) -------
 # These jobs aren't tied to one quiz, so they stay on a fixed daily schedule.
-MONTHLY_LEADERBOARD_TIME = time(hour=23, minute=30, tzinfo=TIMEZONE)
-MONTHLY_RECAP_TIME = time(hour=12, minute=0, tzinfo=TIMEZONE)
-BIRTHDAY_MESSAGE_TIME = time(hour=8, minute=0, tzinfo=TIMEZONE)
+# Stored without a timezone; jobs/__init__.py localises them to TIMEZONE.
+MONTHLY_LEADERBOARD_TIME = time(hour=23, minute=30)
+MONTHLY_RECAP_TIME = time(hour=12, minute=0)
+BIRTHDAY_MESSAGE_TIME = time(hour=8, minute=0)

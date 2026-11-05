@@ -118,6 +118,11 @@ def parse_when(text: str, now: datetime.datetime | None = None) -> datetime.date
     return to_utc(target)
 
 
+def parse_time_of_day(text: str) -> datetime.time:
+    """Read a clock time for a recurring job, e.g. "8:00 PM" -> time(20, 0)."""
+    return _clock_to_time(text)
+
+
 def format_moment(moment: datetime.datetime, now: datetime.datetime | None = None) -> str:
     """Friendly local description, e.g. "today at 11:00 PM" or "Sat 6 Dec, 8:00 AM"."""
     local = to_local(moment)
@@ -132,3 +137,7 @@ def format_moment(moment: datetime.datetime, now: datetime.datetime | None = Non
     if 2 <= days_ahead <= 6:
         return f"{local.strftime('%A')} at {clock}"
     return f"{local.strftime('%a %-d %b')}, {clock}"
+
+
+def format_time_of_day(value: datetime.time) -> str:
+    return value.strftime("%I:%M %p").lstrip("0")

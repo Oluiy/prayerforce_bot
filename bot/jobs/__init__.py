@@ -4,6 +4,7 @@ Quiz opening and closing is *not* here: each quiz carries its own times and
 the sweep acts on them. Only jobs with no quiz behind them run by the clock.
 """
 import logging
+from datetime import time
 
 from telegram.ext import JobQueue
 
@@ -20,6 +21,10 @@ logger = logging.getLogger(__name__)
 SWEEP_JOB = "quiz_schedule_sweep"
 
 
+def _local(value: time) -> time:
+    return time(hour=value.hour, minute=value.minute, tzinfo=c.TIMEZONE)
+
+
 def schedule_jobs(job_queue: JobQueue):
     """Register the sweep and the daily jobs. Called once at startup."""
     job_queue.run_repeating(
@@ -27,7 +32,7 @@ def schedule_jobs(job_queue: JobQueue):
     )
 
     # These run every day; the jobs themselves only act on the last day of the month.
-    job_queue.run_daily(send_monthly_cumulative_leaderboard, time=c.MONTHLY_LEADERBOARD_TIME)
-    job_queue.run_daily(generate_monthly_recap, time=c.MONTHLY_RECAP_TIME)
+    job_queue.run_daily(send_monthly_cumulative_leaderboard, time=_local(c.MONTHLY_LEADERBOARD_TIME))
+    job_queue.run_daily(generate_monthly_recap, time=_local(c.MONTHLY_RECAP_TIME))
 
-    job_queue.run_daily(send_birthday_messages, time=c.BIRTHDAY_MESSAGE_TIME)
+    job_queue.run_daily(send_birthday_messages, time=_local(c.BIRTHDAY_MESSAGE_TIME))

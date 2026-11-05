@@ -77,6 +77,15 @@ model Quiz {
   userScores UserScore[]
 }
 
+// Admin-editable values. Only overrides are stored; defaults live in
+// config/constants.py via services/settings_service.py.
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt
+  updatedBy String?
+}
+
 model UserScore {
   id                String   @id @default(uuid())
   userId            String
