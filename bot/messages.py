@@ -2,7 +2,7 @@
 
 Keep wording changes here so handlers and jobs only deal with logic.
 """
-from config.constants import QUESTION_TIME_LIMIT_SECONDS
+from services import settings_service
 from utils.dates import format_moment
 from utils.formatting import format_duration, format_hours_minutes, full_name, rank_label
 
@@ -41,30 +41,34 @@ def welcome(first_name: str) -> str:
     )
 
 
-ANNOUNCEMENT = (
-    "Get Edified🥰🙏 !!!\n\n\n"
-    "We’ll be going before the Lord by 5:30pm today with hearts ready to seek Him. "
-    "Tell a Prayer Force member to tell a Prayer Force member to tell another Prayer Force member "
-    "that today's meeting is not one you want to miss."
-)
+def announcement() -> str:
+    return (
+        "Get Edified🥰🙏 !!!\n\n\n"
+        f"We’ll be going before the Lord by {settings_service.get('announcement_time')} today "
+        "with hearts ready to seek Him. "
+        "Tell a Prayer Force member to tell a Prayer Force member to tell another Prayer Force member "
+        "that today's meeting is not one you want to miss."
+    )
 
 HISTORY = (
     "Prayer Force was founded in 2020 as a spiritual movement dedicated to prayer and intercession. "
     "Since then, we've grown into a community of believers committed to seeking God's presence through prayer."
 )
 
-MEETINGS = (
-    "Our Sunday meetings schedule:\n\n"
-    "1. Pre-service Prayer: 7:00 AM - 7:30 AM\n"
-    "2. Post-service Prayer: 8:05 AM - 8:35 AM"
-)
+def meetings() -> str:
+    return (
+        "Our Sunday meetings schedule:\n\n"
+        f"1. Pre-service Prayer: {settings_service.get('pre_service_time')}\n"
+        f"2. Post-service Prayer: {settings_service.get('post_service_time')}"
+    )
 
-MERCH = (
-    "To purchase Prayer Force merchandise:\n\n"
-    "1. Prayer Force T-shirt - ₦5,000\n"
-    "2. Prayer Journal - ₦3,500\n\n"
-    "Please use the /donate command to make payment and specify what you're purchasing in the description."
-)
+def merch() -> str:
+    return (
+        "To purchase Prayer Force merchandise:\n\n"
+        f"1. Prayer Force T-shirt - {settings_service.get('tshirt_price')}\n"
+        f"2. Prayer Journal - {settings_service.get('journal_price')}\n\n"
+        "Please use the /donate command to make payment and specify what you're purchasing in the description."
+    )
 
 OPERATION_CANCELLED = "Operation cancelled."
 NOT_AUTHORIZED = "That command is for admins only."
@@ -141,7 +145,8 @@ def question_header(index: int, total: int, text: str) -> str:
 
 
 def with_full_timer(base_text: str) -> str:
-    return f"{base_text}\n\n⏱️ You have {QUESTION_TIME_LIMIT_SECONDS} seconds to answer!"
+    seconds = settings_service.get("question_seconds")
+    return f"{base_text}\n\n⏱️ You have {seconds} seconds to answer!"
 
 
 def with_time_left(base_text: str, seconds_left: int) -> str:

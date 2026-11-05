@@ -11,14 +11,13 @@ import logging
 import random
 
 from config.constants import (
-    LEADERBOARD_SIZE,
     LEADERBOARD_VISIBLE_DAYS,
     MONTHLY_LEADERBOARD_SIZE,
     MONTHLY_RECAP_LOOKBACK_DAYS,
     MONTHLY_RECAP_QUESTIONS,
-    QUESTIONS_PER_USER,
 )
 from repositories import quiz_repository, score_repository, user_repository
+from services import settings_service
 from utils.dates import utc_now
 
 logger = logging.getLogger(__name__)
@@ -197,7 +196,8 @@ async def get_existing_score(user_id, quiz_id):
 
 def pick_questions_for_user(questions):
     """Random subset of the quiz's question pool for one user."""
-    return random.sample(questions, min(len(questions), QUESTIONS_PER_USER))
+    per_user = settings_service.get("questions_per_user")
+    return random.sample(questions, min(len(questions), per_user))
 
 
 async def record_score(chat_id, quiz_id, score, time_taken_seconds):
@@ -240,7 +240,7 @@ async def get_leaderboard(quiz_id=None):
             title_suffix = "(Final)"
 
     scores = await score_repository.list_for_quiz(quiz.id)
-    top = _rank(scores, "score")[:LEADERBOARD_SIZE]
+    top = _rank(scores, "score")[: settings_service.get("leaderboard_size")]
     if not top:
         return None
     return title_suffix, top

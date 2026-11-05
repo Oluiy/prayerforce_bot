@@ -6,9 +6,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRe
 from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler
 
 import messages
-from config.constants import QUESTION_TIME_LIMIT_SECONDS
 from repositories import user_repository
-from services import quiz_service
+from services import quiz_service, settings_service
 
 QUIZ_QUESTION = 1
 
@@ -111,7 +110,8 @@ async def ask_question(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_
             "user_id": user_id_val,
             "base_text": base_text,
             "reply_markup": reply_markup,
-            "time_left": QUESTION_TIME_LIMIT_SECONDS,
+            # Same setting the question text quotes, so they always agree.
+            "time_left": settings_service.get("question_seconds"),
             "index": index,
         },
         chat_id=chat_id,

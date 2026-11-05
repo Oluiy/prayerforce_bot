@@ -9,11 +9,11 @@ async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def sunday_meetings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(messages.MEETINGS)
+    await update.message.reply_text(messages.meetings())
 
 
 async def purchase_shirt_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(messages.MERCH)
+    await update.message.reply_text(messages.merch())
 
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -12,8 +12,7 @@ from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, Con
 import keyboards
 import messages
 import notifications
-from config.constants import DEFAULT_QUIZ_CLOSE_TIME, DEFAULT_QUIZ_OPEN_TIME
-from services import quiz_service
+from services import quiz_service, settings_service
 from utils.auth import is_admin
 from utils.dates import TimeParseError, format_moment, local_now, parse_when, to_local, to_utc
 
@@ -31,7 +30,7 @@ def _at_time(day: datetime.datetime, when: datetime.time) -> datetime.datetime:
 def open_presets(now=None):
     """Offer "now", and the usual opening time today (if still ahead) and tomorrow."""
     now = now or local_now()
-    default = DEFAULT_QUIZ_OPEN_TIME
+    default = settings_service.get("default_quiz_open_time")
     presets = [("Open now", to_utc(now))]
 
     today = _at_time(now, default)
@@ -45,7 +44,7 @@ def open_presets(now=None):
 def close_presets(opens_at, now=None):
     """Offer the usual closing time after opening, plus a day and a week."""
     now = now or local_now()
-    default = DEFAULT_QUIZ_CLOSE_TIME
+    default = settings_service.get("default_quiz_close_time")
     opens_local = to_local(opens_at)
 
     same_day = _at_time(opens_local, default)
