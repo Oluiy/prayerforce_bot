@@ -6,6 +6,12 @@ import pytz
 # --- General -----------------------------------------------------------------
 TIMEZONE = pytz.timezone("Africa/Lagos")
 
+# --- Database ----------------------------------------------------------------
+# Prisma's own default is 10 seconds, which a cold query engine start can
+# exceed. Raised so a slow start doesn't stop the bot from booting.
+DATABASE_CONNECT_TIMEOUT_SECONDS = 60
+DATABASE_CONNECT_ATTEMPTS = 3
+
 # --- Meeting times and prices (defaults; admins change these via /settings) --
 PRE_SERVICE_TIME = "7:00 AM - 7:30 AM"
 POST_SERVICE_TIME = "8:05 AM - 8:35 AM"
