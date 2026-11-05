@@ -47,3 +47,13 @@ def settings_markup(values) -> InlineKeyboardMarkup:
     ]
     rows.append([InlineKeyboardButton(messages.SETTINGS_CANCEL_BUTTON, callback_data="setting_done")])
     return InlineKeyboardMarkup(rows)
+
+
+def settings_markup(values) -> InlineKeyboardMarkup:
+    """`values` is a list of (SettingDef, current_value)."""
+    rows = [
+        [InlineKeyboardButton(messages.settings_option(d, current), callback_data=f"setting_{d.key}")]
+        for d, current in values
+    ]
+    rows.append([InlineKeyboardButton(messages.SETTINGS_CANCEL_BUTTON, callback_data="setting_done")])
+    return InlineKeyboardMarkup(rows)

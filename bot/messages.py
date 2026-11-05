@@ -363,3 +363,31 @@ def end_quiz_done(quiz, score_count: int) -> str:
         f"✅ *{quiz_label(quiz.type)} closed early.*\n\n"
         f"{score_count} member(s) took it. The results have been sent out."
     )
+
+
+# --- /settings (admin) ------------------------------------------------------
+SETTINGS_NOT_AUTHORIZED = "Only admins can change settings."
+SETTINGS_HEADER = "⚙️ *Settings*\n\nTap a setting to change it. These take effect right away — no redeploy needed."
+SETTINGS_CANCELLED = "No changes made."
+SETTINGS_SAVE_FAILED = "⚠️ I couldn't save that. Nothing was changed — please try again."
+SETTINGS_CANCEL_BUTTON = "Done"
+
+
+def settings_ask_value(definition, current) -> str:
+    text = f"⚙️ *{definition.label}*\n\nCurrent value: `{definition.to_text(current)}`\n\n"
+    if definition.hint:
+        text += f"_{definition.hint}_\n\n"
+    text += "Send the new value, or /cancel to leave it unchanged."
+    return text
+
+
+def settings_saved(definition, value) -> str:
+    return f"✅ *{definition.label}* is now `{definition.to_text(value)}`."
+
+
+def settings_rejected(reason: str) -> str:
+    return f"⚠️ {reason}\n\nSend another value, or /cancel to leave it unchanged."
+
+
+def settings_option(definition, current) -> str:
+    return f"{definition.label}: {definition.to_text(current)}"

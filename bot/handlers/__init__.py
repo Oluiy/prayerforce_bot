@@ -9,6 +9,7 @@ from handlers.menu import commands_handler
 from handlers.quiz_admin import quiz_admin_handler
 from handlers.quiz_schedule import end_quiz_callback_handler, end_quiz_handler, quizzes_handler
 from handlers.quiz_user import quiz_user_handler
+from handlers.settings import settings_handler
 from handlers.start import start_handler, start_text_handler
 
 # Order matters: Telegram updates go to the first handler that matches.
@@ -26,6 +27,7 @@ HANDLERS = [
     quizzes_handler,
     end_quiz_handler,
     end_quiz_callback_handler,
+    settings_handler,
     quiz_user_handler,
     leaderboard_handler,
     leaderboard_callback_handler,
