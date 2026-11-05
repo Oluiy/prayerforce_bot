@@ -19,6 +19,14 @@ BOT_COMMANDS = [
     ("share_testimony", "Share your testimony with the family"),
 ]
 
+# Shown only to admins (see handlers/menu.py).
+ADMIN_COMMANDS = [
+    ("generate_quiz", "Create a quiz from meeting notes"),
+    ("quizzes", "See scheduled, open and recent quizzes"),
+    ("end_quiz", "Close an open quiz now"),
+    ("broadcastmessage", "Send a message to all members"),
+]
+
 
 # --- Welcome & info ----------------------------------------------------------
 def welcome(first_name: str) -> str:
@@ -59,6 +67,7 @@ MERCH = (
 )
 
 OPERATION_CANCELLED = "Operation cancelled."
+NOT_AUTHORIZED = "That command is for admins only."
 COMMAND_MENU_REFRESHED = "Command menu refreshed."
 
 # --- Forms -------------------------------------------------------------------
