@@ -35,17 +35,9 @@ async def add_question(quiz_id, text, options):
     return question
 
 
-async def find_active(quiz_type, order_by):
+async def find_active(quiz_type, order_by="createdAt"):
     return await db.quiz.find_first(
         where={"isActive": True, "type": quiz_type},
-        order={order_by: "desc"},
-    )
-
-
-async def find_pending(quiz_type, order_by):
-    """Latest quiz of this type that hasn't been opened or closed yet."""
-    return await db.quiz.find_first(
-        where={"isActive": False, "isClosed": False, "type": quiz_type},
         order={order_by: "desc"},
     )
 
@@ -54,7 +46,7 @@ async def find_open_with_questions():
     return await db.quiz.find_first(
         where={"isActive": True, "isClosed": False},
         include=WITH_QUESTIONS,
-        order={"weekStart": "desc"},
+        order={"closesAt": "asc"},
     )
 
 
@@ -62,7 +54,7 @@ async def find_latest_started():
     """Newest quiz that is active or already closed."""
     return await db.quiz.find_first(
         where={"OR": [{"isActive": True}, {"isClosed": True}]},
-        order={"weekStart": "desc"},
+        order={"createdAt": "desc"},
     )
 
 

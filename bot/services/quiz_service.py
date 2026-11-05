@@ -235,7 +235,7 @@ async def get_leaderboard(quiz_id=None):
         if quiz.isActive:
             title_suffix = "(Live)"
         else:
-            if (utc_now() - quiz.weekStart).days >= LEADERBOARD_VISIBLE_DAYS:
+            if (utc_now() - quiz.createdAt).days >= LEADERBOARD_VISIBLE_DAYS:
                 return None
             title_suffix = "(Final)"
 
