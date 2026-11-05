@@ -16,3 +16,4 @@ bot/services/__pycache__/
 # Python bytecode caches
 __pycache__/
 *.pyc
+.DS_Store
