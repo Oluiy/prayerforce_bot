@@ -1,62 +1,36 @@
-"""Scheduled quiz jobs. Each job calls the quiz service, then announces the result."""
+"""Scheduled quiz jobs.
+
+Opening and closing is driven by each quiz's own `opensAt`/`closesAt`, so the
+sweep below replaces the old fixed daily open/close jobs. It is safe to miss
+runs: it works from the stored times, so a restart just means the next sweep
+catches up.
+"""
 import datetime
 import logging
 
 from telegram.ext import ContextTypes
 
 import messages
-from handlers.leaderboard import view_results_markup
+import notifications
 from services import broadcast_service, quiz_service
 from utils.dates import is_last_day_of_month, utc_now
 
 logger = logging.getLogger(__name__)
 
 
-async def open_weekly_quiz(context: ContextTypes.DEFAULT_TYPE):
-    logger.info("Running open_weekly_quiz job...")
-    if await quiz_service.open_weekly_quiz():
-        await broadcast_service.broadcast_text(context.bot, messages.WEEKLY_QUIZ_OPEN, parse_mode="Markdown")
-
-
-async def open_daily_quiz(context: ContextTypes.DEFAULT_TYPE):
-    logger.info("Running open_daily_quiz job...")
-    if await quiz_service.open_daily_quiz():
-        await broadcast_service.broadcast_text(context.bot, messages.DAILY_QUIZ_OPEN, parse_mode="Markdown")
-
-
-async def close_daily_quiz(context: ContextTypes.DEFAULT_TYPE):
-    """Close today's quiz, add scores to the monthly totals and announce the winner."""
-    logger.info("Running close_daily_quiz job...")
-    quiz, scores = await quiz_service.close_active_quiz("daily", order_by="createdAt")
-    if not quiz:
-        logger.info("No active daily quiz found to close.")
+async def sweep_quiz_schedule(context: ContextTypes.DEFAULT_TYPE):
+    """Open and close quizzes whose times have arrived."""
+    try:
+        result = await quiz_service.run_schedule_sweep()
+    except Exception:
+        logger.exception("Quiz schedule sweep failed")
         return
 
-    await quiz_service.add_scores_to_monthly_totals(scores, utc_now())
+    for quiz in result.opened:
+        await notifications.announce_quiz_open(context.bot, quiz)
 
-    if scores:
-        winner = scores[0]
-        await broadcast_service.broadcast_text(
-            context.bot,
-            messages.daily_winner(winner.user.firstName, winner.score),
-            parse_mode="Markdown",
-        )
-
-
-async def close_weekly_quiz(context: ContextTypes.DEFAULT_TYPE):
-    """Close the weekly quiz and send everyone a button to view the results."""
-    logger.info("Running close_weekly_quiz job...")
-    quiz, _ = await quiz_service.close_active_quiz("weekly", order_by="weekStart")
-    if not quiz:
-        logger.info("No active quiz found to close.")
-        return
-
-    await broadcast_service.broadcast_text(
-        context.bot,
-        messages.WEEKLY_QUIZ_CLOSED,
-        reply_markup=view_results_markup(messages.VIEW_RESULTS_BUTTON, quiz_id=quiz.id),
-        parse_mode="Markdown",
-    )
+    for quiz, scores in result.closed:
+        await notifications.announce_quiz_closed(context.bot, quiz, scores)
 
 
 async def send_monthly_cumulative_leaderboard(context: ContextTypes.DEFAULT_TYPE):
@@ -81,17 +55,25 @@ async def send_monthly_cumulative_leaderboard(context: ContextTypes.DEFAULT_TYPE
 
 
 async def generate_monthly_recap(context: ContextTypes.DEFAULT_TYPE):
-    """On the last day of the month, build a recap quiz from past weekly questions."""
+    """On the last day of the month, build a recap quiz from past weekly questions.
+
+    It opens straight away and runs for a week, since no admin is here to
+    choose a window.
+    """
     today = datetime.datetime.now()
     if not is_last_day_of_month(today):
         return
 
     logger.info("Generating Monthly Recap Quiz...")
-    question_count = await quiz_service.create_monthly_recap(today)
-    if not question_count:
+    opens_at = utc_now()
+    result = await quiz_service.create_monthly_recap(
+        today, opens_at=opens_at, closes_at=opens_at + datetime.timedelta(days=7)
+    )
+    if not result:
         logger.info("No questions found for monthly recap.")
         return
 
+    quiz, question_count = result
     await broadcast_service.broadcast_text(
         context.bot, messages.monthly_recap_released(question_count), parse_mode="Markdown"
     )

@@ -3,6 +3,7 @@
 Keep wording changes here so handlers and jobs only deal with logic.
 """
 from config.constants import QUESTION_TIME_LIMIT_SECONDS
+from utils.dates import format_moment
 from utils.formatting import format_duration, format_hours_minutes, full_name, rank_label
 
 # --- Command menu ------------------------------------------------------------
@@ -109,11 +110,11 @@ def quiz_save_failed(error: Exception) -> str:
 
 
 def quiz_generated(question_count: int) -> str:
-    return f"✅ Quiz generated successfully with {question_count} questions! It is scheduled to open on Sunday."
+    return f"✅ Quiz generated with {question_count} questions."
 
 
 # --- Taking a quiz -----------------------------------------------------------
-NO_ACTIVE_QUIZ = "There is no active quiz at the moment. Check back on Sunday!"
+NO_ACTIVE_QUIZ = "There is no active quiz at the moment. We’ll let you know as soon as the next one opens!"
 QUIZ_HAS_NO_QUESTIONS = "The quiz seems to have no questions. Please contact admin."
 QUIZ_CANCELLED = "Quiz cancelled."
 
@@ -160,8 +161,8 @@ def quiz_finished(score: int, total: int, elapsed_seconds: int) -> str:
 
 # --- Leaderboards ------------------------------------------------------------
 LEADERBOARD_EMPTY = (
-    "🏆 *Leaderboard Update*\n\nNo active quiz leaderboard currently. "
-    "New quiz results will appear after Sunday 12:00 AM!"
+    "🏆 *Leaderboard Update*\n\nNo quiz leaderboard right now. "
+    "Results will appear once the next quiz has been taken!"
 )
 LEADERBOARD_TEASER = "🏆 *Leaderboard Update!* 🏆\n\nTap the button below to see who's leading! 👇"
 LEADERBOARD_DETAILS_BUTTON = "View Details 📜"
@@ -208,22 +209,37 @@ def monthly_leaderboard(month_label: str, entries) -> str:
 
 
 # --- Scheduled quiz announcements --------------------------------------------
-WEEKLY_QUIZ_OPEN = (
-    "📢 *The Weekly Family Quiz is now OPEN!* 📢\n\n"
-    "Test your knowledge of yesterday's meeting notes.\n"
-    "You have until Friday 10:00 PM to participate.\n\n"
-    "👉 Type /take_quiz to start!"
-)
+QUIZ_LABELS = {"daily": "Daily Family Quiz", "weekly": "Weekly Family Quiz", "monthly": "Monthly Mega-Quiz"}
+QUIZ_BLURBS = {
+    "daily": "Test your knowledge of daily bible study.",
+    "weekly": "Test your knowledge of this week's meeting notes.",
+    "monthly": "Test your retention of this month's topics!",
+}
 
-DAILY_QUIZ_OPEN = (
-    "📢 *The Daily Family Quiz is now OPEN!* 📢\n\n"
-    "Test your knowledge of daily bible study.\n"
-    "You have until tonight 11:30PM to participate.\n\n"
-    "👉 Type /take_quiz to start!"
-)
 
-WEEKLY_QUIZ_CLOSED = "🏆 *Weekly Quiz Closed!* 🏆\n\nThe results are in! Tap the button below to see who won! 👇"
-VIEW_RESULTS_BUTTON = "View Results 📜"
+def quiz_label(quiz_type: str) -> str:
+    return QUIZ_LABELS.get(quiz_type, "Family Quiz")
+
+
+def quiz_open(quiz_type: str, closes_at=None) -> str:
+    text = (
+        f"\U0001f4e2 *The {quiz_label(quiz_type)} is now OPEN!* \U0001f4e2\n\n"
+        f"{QUIZ_BLURBS.get(quiz_type, '')}\n"
+    )
+    if closes_at:
+        text += f"You have until {format_moment(closes_at)} to participate.\n"
+    text += "\n\U0001f449 Type /take_quiz to start!"
+    return text
+
+
+def quiz_closed_teaser(quiz_type: str) -> str:
+    return (
+        f"\U0001f3c6 *{quiz_label(quiz_type)} Closed!* \U0001f3c6\n\n"
+        "The results are in! Tap the button below to see who won! \U0001f447"
+    )
+
+
+VIEW_RESULTS_BUTTON = "View Results \U0001f4dc"
 
 
 def daily_winner(first_name: str, score: int) -> str:
@@ -245,3 +261,43 @@ def birthday(first_name: str, mate_names: list[str]) -> str:
     if mate_names:
         text += f"\nYou share your birthday with: {', '.join(mate_names)}!"
     return text
+
+
+# --- Scheduling a quiz (admin) -----------------------------------------------
+SCHEDULE_ASK_OPEN = (
+    "🗓️ *When should this quiz open?*\n\n"
+    "Pick a button, or type a time such as `8pm`, `tomorrow 7:30am`, "
+    "`+2h` or `2026-12-01 18:00`."
+)
+SCHEDULE_ASK_CLOSE = (
+    "⏳ *When should it close?*\n\n"
+    "Pick a button, or type a time the same way."
+)
+SCHEDULE_OPEN_NOW_BUTTON = "Open now"
+SCHEDULE_CUSTOM_BUTTON = "Type a time"
+SCHEDULE_CANCEL_BUTTON = "Cancel"
+SCHEDULE_CANCELLED = "Scheduling cancelled. The quiz is saved but won't open until you schedule it."
+SCHEDULE_CLOSE_BEFORE_OPEN = "⚠️ The closing time must be after the opening time. Please pick again."
+SCHEDULE_IN_THE_PAST = "⚠️ That time has already passed. Please pick a time in the future."
+SCHEDULE_SAVE_FAILED = (
+    "⚠️ I couldn't save the schedule. The quiz is stored — check /quizzes and try again."
+)
+
+
+def schedule_bad_time(reason: str) -> str:
+    return f"⚠️ {reason}\n\nTry something like `8pm`, `tomorrow 7:30am` or `+2h`."
+
+
+def schedule_confirmed(question_count: int, opens_at, closes_at, opened_now: bool) -> str:
+    if opened_now:
+        return (
+            f"✅ *Quiz is now live* with {question_count} questions.\n\n"
+            f"Closes: {format_moment(closes_at)}\n\n"
+            "Members have been notified. Use /end_quiz to close it early."
+        )
+    return (
+        f"✅ *Quiz scheduled* with {question_count} questions.\n\n"
+        f"Opens: {format_moment(opens_at)}\n"
+        f"Closes: {format_moment(closes_at)}\n\n"
+        "Members will be notified when it opens. Use /quizzes to review it."
+    )

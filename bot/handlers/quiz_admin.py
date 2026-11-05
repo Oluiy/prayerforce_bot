@@ -13,6 +13,7 @@ from services.document_service import (
     extract_text,
 )
 from services.gemini_service import GeminiService
+from handlers.quiz_schedule import SCHEDULE_STATES, ask_quiz_type, cancel_scheduling
 from utils.auth import is_primary_admin
 
 logger = logging.getLogger(__name__)
@@ -70,13 +71,16 @@ async def receive_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         logger.debug("Quiz data: %s", questions_data)
         try:
-            await quiz_service.save_generated_quiz(questions_data, quiz_type="daily")
+            quiz = await quiz_service.save_generated_quiz(questions_data)
         except Exception as e:
             logger.error("Error saving quiz: %s", e)
             await status_msg.edit_text(messages.quiz_save_failed(e))
             return ConversationHandler.END
 
-        await status_msg.edit_text(messages.quiz_generated(len(questions_data)))
+        await status_msg.delete()
+        # The quiz is saved but has no schedule yet, so it can't open by
+        # accident. Next the admin picks its type and its open/close times.
+        return await ask_quiz_type(update.message, context, quiz.id, len(questions_data))
 
     except Exception:
         logger.exception("Unexpected error in receive_notes")
@@ -86,6 +90,9 @@ async def receive_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def cancel_quiz_gen(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Once a quiz exists, /cancel abandons scheduling rather than generation.
+    if context.user_data.get("scheduling_quiz_id"):
+        return await cancel_scheduling(update, context)
     await update.message.reply_text(messages.QUIZ_GEN_CANCELLED)
     return ConversationHandler.END
 
@@ -95,6 +102,7 @@ quiz_admin_handler = ConversationHandler(
     states={
         # ~COMMAND must apply to both, so /cancel reaches the fallback instead of being read as notes.
         WAITING_NOTES: [MessageHandler((filters.TEXT | filters.Document.ALL) & ~filters.COMMAND, receive_notes)],
+        **SCHEDULE_STATES,
     },
     fallbacks=[CommandHandler("cancel", cancel_quiz_gen)],
 )

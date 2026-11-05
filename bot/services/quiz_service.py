@@ -1,7 +1,10 @@
-"""Quiz business rules: creating, opening, closing, scoring and ranking quizzes.
+"""Quiz business rules: creating, scheduling, closing, scoring and ranking.
 
 This module knows nothing about Telegram. Handlers and jobs call it and
 decide how to present the results.
+
+Each quiz carries its own `opensAt` and `closesAt`, set by the admin who
+creates it. `run_schedule_sweep` is what actually opens and closes them.
 """
 import datetime
 import logging
@@ -24,10 +27,18 @@ NO_TIME_RECORDED = 10**9  # sorts entries without a time to the bottom of ties
 
 
 # --- Creating quizzes --------------------------------------------------------
-async def save_generated_quiz(questions_data, quiz_type="daily"):
-    """Store AI-generated questions as a new quiz. Rolls back the quiz if any question fails."""
+async def save_generated_quiz(questions_data, quiz_type="daily", opens_at=None, closes_at=None):
+    """Store AI-generated questions as a new quiz.
+
+    The quiz starts closed; the sweep opens it when `opens_at` arrives.
+    Rolls the whole quiz back if any question fails to save.
+    """
     quiz = await quiz_repository.create(
-        quiz_type=quiz_type, week_start=datetime.datetime.now(), is_active=True
+        quiz_type=quiz_type,
+        week_start=datetime.datetime.now(),
+        is_active=False,
+        opens_at=opens_at,
+        closes_at=closes_at,
     )
     try:
         for q in questions_data:
@@ -42,10 +53,23 @@ async def save_generated_quiz(questions_data, quiz_type="daily"):
     return quiz
 
 
-async def create_monthly_recap(today):
+async def set_schedule(quiz_id, opens_at, closes_at):
+    return await quiz_repository.set_schedule(quiz_id, opens_at, closes_at)
+
+
+async def set_type(quiz_id, quiz_type):
+    return await quiz_repository.set_type(quiz_id, quiz_type)
+
+
+async def open_now(quiz_id):
+    """Open a quiz straight away, so the admin doesn't wait for the next sweep."""
+    return await quiz_repository.activate(quiz_id)
+
+
+async def create_monthly_recap(today, opens_at=None, closes_at=None):
     """Build a recap quiz from the past month's weekly questions.
 
-    Returns the number of questions in the recap, or None if there were none.
+    Returns (quiz, question_count), or None if there were no questions to reuse.
     """
     await quiz_repository.close_all_active("weekly")
 
@@ -56,50 +80,75 @@ async def create_monthly_recap(today):
         return None
 
     selected = random.sample(all_questions, min(len(all_questions), MONTHLY_RECAP_QUESTIONS))
-    recap = await quiz_repository.create(quiz_type="monthly", week_start=today, is_active=True)
+    recap = await quiz_repository.create(
+        quiz_type="monthly",
+        week_start=today,
+        is_active=opens_at is None,  # with no schedule it opens straight away
+        opens_at=opens_at,
+        closes_at=closes_at,
+    )
     for old_q in selected:
         options = [(opt.text, opt.isCorrect) for opt in old_q.options]
         await quiz_repository.add_question(recap.id, f"[Monthly Recap] {old_q.text}", options)
-    return len(selected)
+    return recap, len(selected)
 
 
-# --- Opening & closing -------------------------------------------------------
-async def open_weekly_quiz():
-    """Open the latest pending weekly quiz, unless a monthly recap is running."""
-    if await quiz_repository.find_active("monthly", order_by="weekStart"):
-        logger.info("Monthly quiz is active, skipping weekly quiz open.")
-        return None
-    return await _open_pending("weekly", order_by="weekStart")
+# --- The schedule sweep ------------------------------------------------------
+class SweepResult:
+    """What a sweep did, so the caller can announce it."""
+
+    def __init__(self):
+        self.opened = []  # quizzes that just opened
+        self.closed = []  # (quiz, scores) pairs for quizzes that just closed
+
+    @property
+    def changed(self) -> bool:
+        return bool(self.opened or self.closed)
 
 
-async def open_daily_quiz():
-    """Close any running monthly recap, then open the latest pending daily quiz."""
-    active_monthly = await quiz_repository.find_active("monthly", order_by="weekStart")
-    if active_monthly:
-        await quiz_repository.deactivate(active_monthly.id)
-    return await _open_pending("daily", order_by="createdAt")
+async def run_schedule_sweep(now=None) -> SweepResult:
+    """Open and close quizzes whose times have arrived.
 
-
-async def _open_pending(quiz_type, order_by):
-    quiz = await quiz_repository.find_pending(quiz_type, order_by=order_by)
-    if quiz:
-        logger.info("Opening quiz %s", quiz.id)
-        await quiz_repository.activate(quiz.id)
-    return quiz
-
-
-async def close_active_quiz(quiz_type, order_by):
-    """Close the active quiz of this type.
-
-    Returns (quiz, scores ordered highest first), or (None, []) if nothing was open.
+    Safe to run as often as you like, and safe to miss runs: it works from
+    the stored times, so a restart or downtime just means the next sweep
+    catches up.
     """
-    quiz = await quiz_repository.find_active(quiz_type, order_by=order_by)
-    if not quiz:
-        return None, []
+    now = now or utc_now()
+    result = SweepResult()
+
+    for quiz in await quiz_repository.find_due_to_open(now):
+        await quiz_repository.activate(quiz.id)
+        overdue = quiz.closesAt is not None and quiz.closesAt <= now
+        if overdue:
+            # The whole window passed while we weren't running. Don't announce
+            # an opening nobody can act on; the close below handles it.
+            logger.info("Quiz %s opened past its closing time; closing immediately.", quiz.id)
+        else:
+            logger.info("Opened quiz %s (%s)", quiz.id, quiz.type)
+            result.opened.append(quiz)
+
+    for quiz in await quiz_repository.find_due_to_close(now):
+        scores = await close_quiz(quiz)
+        result.closed.append((quiz, scores))
+
+    return result
+
+
+async def close_quiz(quiz, closed_early_by=None):
+    """Close one quiz and fold daily scores into the monthly totals.
+
+    Returns its scores, highest first.
+    """
     scores = await score_repository.list_for_quiz(quiz.id, highest_first=True)
-    await quiz_repository.close(quiz.id)
-    logger.info("Quiz '%s' successfully closed.", quiz.id)
-    return quiz, scores
+    await quiz_repository.close(quiz.id, closed_early_by=closed_early_by)
+
+    if quiz.type == "daily":
+        await add_scores_to_monthly_totals(scores, utc_now())
+
+    logger.info(
+        "Closed quiz %s (%s)%s", quiz.id, quiz.type, " early by admin" if closed_early_by else ""
+    )
+    return scores
 
 
 async def add_scores_to_monthly_totals(scores, now):
@@ -160,7 +209,7 @@ async def get_leaderboard(quiz_id=None):
         if quiz.isActive:
             title_suffix = "(Live)"
         else:
-            if (utc_now() - quiz.weekStart).days >= LEADERBOARD_VISIBLE_DAYS:
+            if (utc_now() - quiz.createdAt).days >= LEADERBOARD_VISIBLE_DAYS:
                 return None
             title_suffix = "(Final)"
 
@@ -173,7 +222,7 @@ async def get_leaderboard(quiz_id=None):
 
 async def get_monthly_leaderboard(month_year):
     entries = await score_repository.list_cumulative_for_month(month_year)
-    # Original ordering treated a 0 total time like "no time" for tie-breaks.
+    # A 0 total time is treated like "no time" for tie-breaks.
     ranked = sorted(
         entries,
         key=lambda e: (-e.cumulativeScore, e.timeTakenSeconds if e.timeTakenSeconds else NO_TIME_RECORDED),

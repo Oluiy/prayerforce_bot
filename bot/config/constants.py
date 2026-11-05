@@ -33,14 +33,17 @@ LEADERBOARD_SIZE = 10
 MONTHLY_LEADERBOARD_SIZE = 15
 LEADERBOARD_VISIBLE_DAYS = 7       # closed quizzes stay on /leaderboard this long
 
-# --- Job schedule (all times in TIMEZONE) ------------------------------------
-# `days` uses python-telegram-bot numbering: 0 = Sunday ... 6 = Saturday.
-WEEKLY_QUIZ_OPEN_TIME = time(hour=12, minute=0, tzinfo=TIMEZONE)
-WEEKLY_QUIZ_OPEN_DAYS = (6,)
-WEEKLY_QUIZ_CLOSE_TIME = time(hour=19, minute=0, tzinfo=TIMEZONE)
-WEEKLY_QUIZ_CLOSE_DAYS = (5,)
-DAILY_QUIZ_OPEN_TIME = time(hour=8, minute=0, tzinfo=TIMEZONE)
-DAILY_QUIZ_CLOSE_TIME = time(hour=23, minute=0, tzinfo=TIMEZONE)
+# --- Quiz scheduling ---------------------------------------------------------
+# Each quiz carries its own opensAt/closesAt, chosen by the admin who creates
+# it. These two are only the defaults offered as buttons in that menu.
+DEFAULT_QUIZ_OPEN_TIME = time(hour=8, minute=0)
+DEFAULT_QUIZ_CLOSE_TIME = time(hour=23, minute=0)
+
+# How often the sweep checks for quizzes due to open or close.
+SCHEDULE_SWEEP_SECONDS = 60
+
+# --- Recurring job times (all times in TIMEZONE) -----------------------------
+# These jobs aren't tied to one quiz, so they stay on a fixed daily schedule.
 MONTHLY_LEADERBOARD_TIME = time(hour=23, minute=30, tzinfo=TIMEZONE)
 MONTHLY_RECAP_TIME = time(hour=12, minute=0, tzinfo=TIMEZONE)
 BIRTHDAY_MESSAGE_TIME = time(hour=8, minute=0, tzinfo=TIMEZONE)

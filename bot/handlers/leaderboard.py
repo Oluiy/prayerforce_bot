@@ -1,20 +1,14 @@
 import logging
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import Update
 from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes
 
+import keyboards
 import messages
+from keyboards import LEADERBOARD_CALLBACK
 from services import quiz_service
 
 logger = logging.getLogger(__name__)
-
-LEADERBOARD_CALLBACK = "view_leaderboard"
-
-
-def view_results_markup(button_text: str, quiz_id=None) -> InlineKeyboardMarkup:
-    """Button that opens the leaderboard (for a specific quiz if quiz_id is given)."""
-    callback_data = f"{LEADERBOARD_CALLBACK}_{quiz_id}" if quiz_id else LEADERBOARD_CALLBACK
-    return InlineKeyboardMarkup([[InlineKeyboardButton(button_text, callback_data=callback_data)]])
 
 
 async def view_leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -24,7 +18,7 @@ async def view_leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
         messages.LEADERBOARD_TEASER,
-        reply_markup=view_results_markup(messages.LEADERBOARD_DETAILS_BUTTON),
+        reply_markup=keyboards.view_results_markup(messages.LEADERBOARD_DETAILS_BUTTON),
         parse_mode="Markdown",
     )
 
