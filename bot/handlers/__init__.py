@@ -7,6 +7,7 @@ from handlers.info import history_handler, purchase_shirt_handler, sunday_meetin
 from handlers.leaderboard import leaderboard_callback_handler, leaderboard_handler
 from handlers.menu import commands_handler
 from handlers.quiz_admin import quiz_admin_handler
+from handlers.quiz_schedule import end_quiz_callback_handler, end_quiz_handler, quizzes_handler
 from handlers.quiz_user import quiz_user_handler
 from handlers.start import start_handler, start_text_handler
 
@@ -22,6 +23,9 @@ HANDLERS = [
     prayer_request_handler,
     testimony_handler,
     quiz_admin_handler,
+    quizzes_handler,
+    end_quiz_handler,
+    end_quiz_callback_handler,
     quiz_user_handler,
     leaderboard_handler,
     leaderboard_callback_handler,

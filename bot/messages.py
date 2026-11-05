@@ -301,3 +301,56 @@ def schedule_confirmed(question_count: int, opens_at, closes_at, opened_now: boo
         f"Closes: {format_moment(closes_at)}\n\n"
         "Members will be notified when it opens. Use /quizzes to review it."
     )
+
+
+# --- /quizzes (admin) --------------------------------------------------------
+QUIZZES_NONE = "There are no quizzes yet. Use /generate_quiz to create one."
+QUIZZES_NOT_AUTHORIZED = "Only admins can view the quiz schedule."
+
+
+def quizzes_overview(open_quizzes, scheduled, recently_closed) -> str:
+    text = "🗂️ *Quiz schedule*\n"
+
+    text += "\n*Open now*\n"
+    if open_quizzes:
+        for quiz in open_quizzes:
+            closes = format_moment(quiz.closesAt) if quiz.closesAt else "no closing time set"
+            text += f"• {quiz_label(quiz.type)} — closes {closes}\n"
+    else:
+        text += "• none\n"
+
+    text += "\n*Scheduled*\n"
+    if scheduled:
+        for quiz in scheduled:
+            if quiz.opensAt:
+                text += f"• {quiz_label(quiz.type)} — opens {format_moment(quiz.opensAt)}\n"
+            else:
+                text += f"• {quiz_label(quiz.type)} — ⚠️ no opening time set\n"
+    else:
+        text += "• none\n"
+
+    if recently_closed:
+        text += "\n*Recently closed*\n"
+        for quiz in recently_closed:
+            early = " (ended early)" if quiz.closedEarlyBy else ""
+            text += f"• {quiz_label(quiz.type)}{early}\n"
+    return text
+
+
+# --- /end_quiz (admin) -------------------------------------------------------
+END_QUIZ_NOT_AUTHORIZED = "Only admins can end a quiz."
+END_QUIZ_NONE_OPEN = "There is no open quiz to end right now."
+END_QUIZ_ASK = "Which quiz should I close now? Members will get the results straight away."
+END_QUIZ_GONE = "That quiz is no longer open — someone may have closed it already."
+
+
+def end_quiz_option(quiz) -> str:
+    closes = format_moment(quiz.closesAt) if quiz.closesAt else "no closing time"
+    return f"{quiz_label(quiz.type)} (closes {closes})"
+
+
+def end_quiz_done(quiz, score_count: int) -> str:
+    return (
+        f"✅ *{quiz_label(quiz.type)} closed early.*\n\n"
+        f"{score_count} member(s) took it. The results have been sent out."
+    )

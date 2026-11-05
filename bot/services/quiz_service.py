@@ -151,6 +151,15 @@ async def close_quiz(quiz, closed_early_by=None):
     return scores
 
 
+async def close_quiz_by_id(quiz_id, closed_early_by=None):
+    """Close a quiz an admin picked. Returns (quiz, scores) or None if it's already closed."""
+    quiz = await quiz_repository.get(quiz_id)
+    if not quiz or quiz.isClosed:
+        return None
+    scores = await close_quiz(quiz, closed_early_by=closed_early_by)
+    return quiz, scores
+
+
 async def add_scores_to_monthly_totals(scores, now):
     month_year = now.strftime("%Y-%m")
     for entry in scores:
@@ -158,6 +167,23 @@ async def add_scores_to_monthly_totals(scores, now):
             entry.userId, month_year, entry.score, entry.timeTakenSeconds
         )
         logger.info("Updated cumulative score for %s", entry.user.firstName)
+
+
+# --- Listing for admins ------------------------------------------------------
+async def list_scheduled():
+    return await quiz_repository.find_scheduled()
+
+
+async def list_open():
+    return await quiz_repository.find_open()
+
+
+async def list_recently_closed(limit=5):
+    return await quiz_repository.find_recently_closed(limit=limit)
+
+
+async def count_questions(quiz_id) -> int:
+    return await quiz_repository.count_questions(quiz_id)
 
 
 # --- Taking a quiz -----------------------------------------------------------
@@ -209,7 +235,7 @@ async def get_leaderboard(quiz_id=None):
         if quiz.isActive:
             title_suffix = "(Live)"
         else:
-            if (utc_now() - quiz.createdAt).days >= LEADERBOARD_VISIBLE_DAYS:
+            if (utc_now() - quiz.weekStart).days >= LEADERBOARD_VISIBLE_DAYS:
                 return None
             title_suffix = "(Final)"
 

@@ -28,3 +28,22 @@ def schedule_markup(presets) -> InlineKeyboardMarkup:
     rows.append([InlineKeyboardButton(messages.SCHEDULE_CUSTOM_BUTTON, callback_data="sched_custom")])
     rows.append([InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="sched_cancel")])
     return InlineKeyboardMarkup(rows)
+
+
+def end_quiz_markup(quizzes) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(messages.end_quiz_option(quiz), callback_data=f"endquiz_{quiz.id}")]
+        for quiz in quizzes
+    ]
+    rows.append([InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="endquiz_cancel")])
+    return InlineKeyboardMarkup(rows)
+
+
+def settings_markup(values) -> InlineKeyboardMarkup:
+    """`values` is a list of (SettingDef, current_value)."""
+    rows = [
+        [InlineKeyboardButton(messages.settings_option(d, current), callback_data=f"setting_{d.key}")]
+        for d, current in values
+    ]
+    rows.append([InlineKeyboardButton(messages.SETTINGS_CANCEL_BUTTON, callback_data="setting_done")])
+    return InlineKeyboardMarkup(rows)

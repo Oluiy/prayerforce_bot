@@ -14,6 +14,7 @@ import messages
 import notifications
 from config.constants import DEFAULT_QUIZ_CLOSE_TIME, DEFAULT_QUIZ_OPEN_TIME
 from services import quiz_service
+from utils.auth import is_admin
 from utils.dates import TimeParseError, format_moment, local_now, parse_when, to_local, to_utc
 
 logger = logging.getLogger(__name__)
@@ -213,3 +214,64 @@ SCHEDULE_STATES = {
         MessageHandler(filters.TEXT & ~filters.COMMAND, typed_close),
     ],
 }
+
+
+# --- /quizzes ----------------------------------------------------------------
+async def list_quizzes(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_admin(update.effective_user):
+        await update.message.reply_text(messages.QUIZZES_NOT_AUTHORIZED)
+        return
+
+    open_quizzes = await quiz_service.list_open()
+    scheduled = await quiz_service.list_scheduled()
+    closed = await quiz_service.list_recently_closed(limit=3)
+
+    if not (open_quizzes or scheduled or closed):
+        await update.message.reply_text(messages.QUIZZES_NONE)
+        return
+
+    await update.message.reply_text(
+        messages.quizzes_overview(open_quizzes, scheduled, closed), parse_mode="Markdown"
+    )
+
+
+# --- /end_quiz ---------------------------------------------------------------
+async def start_end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_admin(update.effective_user):
+        await update.message.reply_text(messages.END_QUIZ_NOT_AUTHORIZED)
+        return
+
+    open_quizzes = await quiz_service.list_open()
+    if not open_quizzes:
+        await update.message.reply_text(messages.END_QUIZ_NONE_OPEN)
+        return
+
+    await update.message.reply_text(
+        messages.END_QUIZ_ASK, reply_markup=keyboards.end_quiz_markup(open_quizzes)
+    )
+
+
+async def confirm_end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if not is_admin(update.effective_user):
+        return
+    if query.data == "endquiz_cancel":
+        await query.edit_message_text(messages.SETTINGS_CANCELLED)
+        return
+
+    quiz_id = query.data.replace("endquiz_", "")
+    result = await quiz_service.close_quiz_by_id(quiz_id, closed_early_by=update.effective_user.id)
+    if not result:
+        await query.edit_message_text(messages.END_QUIZ_GONE)
+        return
+
+    quiz, scores = result
+    await query.edit_message_text(messages.end_quiz_done(quiz, len(scores)), parse_mode="Markdown")
+    await notifications.announce_quiz_closed(context.bot, quiz, scores)
+
+
+quizzes_handler = CommandHandler("quizzes", list_quizzes)
+end_quiz_handler = CommandHandler("end_quiz", start_end_quiz)
+end_quiz_callback_handler = CallbackQueryHandler(confirm_end_quiz, pattern="^endquiz_")
