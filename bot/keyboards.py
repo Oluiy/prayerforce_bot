@@ -2,6 +2,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 import messages
+from utils.formatting import full_name
 
 LEADERBOARD_CALLBACK = "view_leaderboard"
 
@@ -56,4 +57,33 @@ def settings_markup(values) -> InlineKeyboardMarkup:
         for d, current in values
     ]
     rows.append([InlineKeyboardButton(messages.SETTINGS_CANCEL_BUTTON, callback_data="setting_done")])
+    return InlineKeyboardMarkup(rows)
+
+
+def member_pick_markup(members) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(full_name(m), callback_data=f"pickadmin_{m.chatId}")]
+        for m in members
+    ]
+    rows.append([InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="pickadmin_cancel")])
+    return InlineKeyboardMarkup(rows)
+
+
+def duration_markup(presets) -> InlineKeyboardMarkup:
+    """`presets` is a list of (label, minutes)."""
+    rows = [
+        [InlineKeyboardButton(label, callback_data=f"dur_{minutes}")] for label, minutes in presets
+    ]
+    rows.append([InlineKeyboardButton(messages.SCHEDULE_CUSTOM_BUTTON, callback_data="dur_custom")])
+    rows.append([InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="dur_cancel")])
+    return InlineKeyboardMarkup(rows)
+
+
+def revoke_admin_markup(entries) -> InlineKeyboardMarkup:
+    """`entries` is a list of (telegram_id, label)."""
+    rows = [
+        [InlineKeyboardButton(label, callback_data=f"revokeadmin_{telegram_id}")]
+        for telegram_id, label in entries
+    ]
+    rows.append([InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="revokeadmin_cancel")])
     return InlineKeyboardMarkup(rows)

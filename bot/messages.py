@@ -3,7 +3,7 @@
 Keep wording changes here so handlers and jobs only deal with logic.
 """
 from services import settings_service
-from utils.dates import format_moment
+from utils.dates import format_duration_left, format_moment
 from utils.formatting import format_duration, format_hours_minutes, full_name, rank_label
 
 # --- Command menu ------------------------------------------------------------
@@ -25,6 +25,10 @@ ADMIN_COMMANDS = [
     ("quizzes", "See scheduled, open and recent quizzes"),
     ("end_quiz", "Close an open quiz now"),
     ("broadcastmessage", "Send a message to all members"),
+    ("settings", "Change times, prices and quiz rules"),
+    ("admins", "See who has admin access"),
+    ("make_admin", "Give a member admin access for a while"),
+    ("revoke_admin", "End someone's temporary admin access"),
 ]
 
 
@@ -396,3 +400,93 @@ def settings_rejected(reason: str) -> str:
 
 def settings_option(definition, current) -> str:
     return f"{definition.label}: {definition.to_text(current)}"
+
+
+# --- Temporary admins (admin) ------------------------------------------------
+ADMIN_MANAGE_NOT_AUTHORIZED = (
+    "Only a permanent admin can hand out or take back admin access."
+)
+MAKE_ADMIN_ASK_MEMBER = (
+    "👤 *Who should get admin access?*\n\n"
+    "Send part of their name, or their Telegram ID number.\n\n"
+    "Send /cancel to stop."
+)
+MAKE_ADMIN_NO_MATCH = (
+    "I couldn't find a member by that name. Try a different spelling, or send their "
+    "Telegram ID number instead."
+)
+MAKE_ADMIN_PICK_MEMBER = "Which one did you mean?"
+MAKE_ADMIN_ASK_DURATION = (
+    "⏳ *How long should they have access?*\n\n"
+    "Pick a button, or type a length such as `30m`, `4h` or `2d`."
+)
+MAKE_ADMIN_CANCELLED = "No admin access was given."
+ADMIN_GRANT_SAVE_FAILED = "⚠️ I couldn't save that. Nothing was changed — please try again."
+
+REVOKE_ADMIN_NONE = "No one currently has temporary admin access."
+REVOKE_ADMIN_ASK = "Whose access should I end now?"
+REVOKE_ADMIN_GONE = "Their access had already ended."
+
+ADMINS_NONE_TEMPORARY = "No one has temporary access right now."
+
+
+def admin_grant_rejected(reason: str) -> str:
+    return f"⚠️ {reason}"
+
+
+def admin_duration_rejected(reason: str) -> str:
+    return f"⚠️ {reason}\n\nTry something like `30m`, `4h` or `2d`."
+
+
+def member_label(user, telegram_id=None) -> str:
+    if user is not None:
+        return full_name(user)
+    return f"ID {telegram_id}"
+
+
+def admin_granted(label: str, until) -> str:
+    return (
+        f"✅ *{label}* is now an admin.\n\n"
+        f"Access ends {format_moment(until)} ({format_duration_left(until)}).\n\n"
+        "Use /admins to review, or /revoke_admin to end it sooner."
+    )
+
+
+def admin_granted_notice(until) -> str:
+    """Sent to the member themselves."""
+    return (
+        "🔑 *You've been given admin access to Tefillah.*\n\n"
+        f"It lasts until {format_moment(until)}.\n\n"
+        "Check your command menu for what you can now do. "
+        "Your access ends automatically — nothing to remember."
+    )
+
+
+def admin_revoked(label: str) -> str:
+    return f"✅ *{label}* no longer has admin access."
+
+
+ADMIN_REVOKED_NOTICE = (
+    "🔒 Your admin access to Tefillah has ended. Thank you for helping out!"
+)
+ADMIN_EXPIRED_NOTICE = (
+    "🔒 Your temporary admin access has now ended. Thank you for helping out!"
+)
+
+
+def admins_overview(permanent, temporary) -> str:
+    """`permanent` and `temporary` are lists of (label, extra) pairs."""
+    text = "🛡️ *Admins*\n\n*Permanent*\n"
+    for label, extra in permanent:
+        text += f"• {label}{extra}\n"
+
+    text += "\n*Temporary*\n"
+    if temporary:
+        for label, extra in temporary:
+            text += f"• {label}{extra}\n"
+    else:
+        text += "• none\n"
+
+    text += "\nPermanent admins are set in the server's `.env` file. "
+    text += "Temporary access is given with /make_admin."
+    return text

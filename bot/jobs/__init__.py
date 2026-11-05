@@ -9,7 +9,8 @@ from datetime import time
 
 from telegram.ext import Application, JobQueue
 
-from config.constants import SCHEDULE_SWEEP_SECONDS, TIMEZONE
+from config.constants import ADMIN_EXPIRY_SWEEP_SECONDS, SCHEDULE_SWEEP_SECONDS, TIMEZONE
+from jobs.admin_jobs import expire_admin_grants
 from jobs.birthday_jobs import send_birthday_messages
 from jobs.quiz_jobs import (
     generate_monthly_recap,
@@ -21,6 +22,7 @@ from services import settings_service
 logger = logging.getLogger(__name__)
 
 SWEEP_JOB = "quiz_schedule_sweep"
+ADMIN_EXPIRY_JOB = "admin_expiry_sweep"
 
 # job name -> (callback, settings key holding its time)
 DAILY_JOBS = {
@@ -38,6 +40,9 @@ def schedule_jobs(job_queue: JobQueue):
     """Register the sweep and the daily jobs. Called once at startup."""
     job_queue.run_repeating(
         sweep_quiz_schedule, interval=SCHEDULE_SWEEP_SECONDS, first=5, name=SWEEP_JOB
+    )
+    job_queue.run_repeating(
+        expire_admin_grants, interval=ADMIN_EXPIRY_SWEEP_SECONDS, first=10, name=ADMIN_EXPIRY_JOB
     )
     _schedule_daily_jobs(job_queue)
 

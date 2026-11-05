@@ -29,3 +29,20 @@ async def list_by_birthday(day):
     """Users whose birthday falls on this month and day, in any year."""
     users = await db.user.find_many(where={"birthday": {"not": None}})
     return [u for u in users if (u.birthday.month, u.birthday.day) == (day.month, day.day)]
+
+
+async def search_by_name(term: str, limit: int = 8):
+    """Members whose first or last name contains `term`, case-insensitively."""
+    return await db.user.find_many(
+        where={
+            "OR": [
+                {"firstName": {"contains": term, "mode": "insensitive"}},
+                {"lastName": {"contains": term, "mode": "insensitive"}},
+            ]
+        },
+        take=limit,
+    )
+
+
+async def get_many_by_chat_ids(chat_ids):
+    return await db.user.find_many(where={"chatId": {"in": [str(c) for c in chat_ids]}})

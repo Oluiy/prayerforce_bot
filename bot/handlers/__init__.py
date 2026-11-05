@@ -1,5 +1,11 @@
 from telegram.ext import Application
 
+from handlers.admin_manage import (
+    admins_handler,
+    make_admin_handler,
+    revoke_admin_callback_handler,
+    revoke_admin_handler,
+)
 from handlers.announcement import announcement_handler
 from handlers.broadcast import manual_broadcast_handler
 from handlers.forms import prayer_request_handler, testimony_handler
@@ -28,6 +34,10 @@ HANDLERS = [
     end_quiz_handler,
     end_quiz_callback_handler,
     settings_handler,
+    admins_handler,
+    make_admin_handler,
+    revoke_admin_handler,
+    revoke_admin_callback_handler,
     quiz_user_handler,
     leaderboard_handler,
     leaderboard_callback_handler,

@@ -10,7 +10,7 @@ from handlers import register_handlers
 from handlers.menu import set_bot_commands
 from handlers.settings import set_change_callback
 from jobs import reschedule_jobs, schedule_jobs
-from services import settings_service
+from services import admin_service, settings_service
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,8 @@ async def main():
 
     # Admin-changed settings decide the job times, so load them first.
     await settings_service.load()
+    # Live temporary-admin grants, so access survives a restart.
+    await admin_service.load()
 
     application = (
         ApplicationBuilder().token(settings.telegram_bot_token).post_init(set_bot_commands).build()

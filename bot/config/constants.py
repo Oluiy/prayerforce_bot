@@ -49,6 +49,10 @@ DEFAULT_QUIZ_CLOSE_TIME = time(hour=23, minute=0)
 # How often the sweep checks for quizzes due to open or close.
 SCHEDULE_SWEEP_SECONDS = 60
 
+# How often we tidy up after temporary admin access that has run out.
+# Access stops the instant it expires; this only resets menus and notifies.
+ADMIN_EXPIRY_SWEEP_SECONDS = 60
+
 # --- Recurring job times (defaults; admins change these via /settings) -------
 # These jobs aren't tied to one quiz, so they stay on a fixed daily schedule.
 # Stored without a timezone; jobs/__init__.py localises them to TIMEZONE.
