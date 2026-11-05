@@ -77,6 +77,21 @@ model Quiz {
   userScores UserScore[]
 }
 
+// A member given admin rights for a limited time. Permanent admins stay in
+// .env (ADMIN_IDS); these are the temporary ones.
+model AdminGrant {
+  id         String    @id @default(uuid())
+  telegramId String
+  grantedBy  String
+  grantedAt  DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  revokedBy  String?
+
+  @@index([telegramId])
+  @@index([expiresAt])
+}
+
 // Admin-editable values. Only overrides are stored; defaults live in
 // config/constants.py via services/settings_service.py.
 model Setting {

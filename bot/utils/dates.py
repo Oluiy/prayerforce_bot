@@ -141,3 +141,50 @@ def format_moment(moment: datetime.datetime, now: datetime.datetime | None = Non
 
 def format_time_of_day(value: datetime.time) -> str:
     return value.strftime("%I:%M %p").lstrip("0")
+
+
+_DURATION = re.compile(r"^(\d+)\s*(m|min|mins|minute|minutes|h|hr|hrs|hour|hours|d|day|days)?$", re.I)
+
+
+def parse_duration(text: str) -> datetime.timedelta:
+    """Read a length of time, e.g. "30m", "2 hours", "1d". A bare number means minutes."""
+    raw = (text or "").strip().lstrip("+")
+    match = _DURATION.match(raw)
+    if not match:
+        raise TimeParseError("I couldn't read that as a length of time.")
+
+    amount = int(match.group(1))
+    if amount <= 0:
+        raise TimeParseError("Please give a length of time greater than zero.")
+
+    unit = (match.group(2) or "m").lower()
+    if unit.startswith("d"):
+        return datetime.timedelta(days=amount)
+    if unit.startswith("h"):
+        return datetime.timedelta(hours=amount)
+    return datetime.timedelta(minutes=amount)
+
+
+def format_duration_left(until: datetime.datetime, now: datetime.datetime | None = None) -> str:
+    """How long is left, e.g. "2h 15m left" or "under a minute left"."""
+    now = now or utc_now()
+    if until.tzinfo is None:
+        until = until.replace(tzinfo=datetime.timezone.utc)
+    seconds = int((until - now).total_seconds())
+    if seconds <= 0:
+        return "expired"
+
+    days, seconds = divmod(seconds, 86400)
+    hours, seconds = divmod(seconds, 3600)
+    minutes = seconds // 60
+
+    parts = []
+    if days:
+        parts.append(f"{days}d")
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes and not days:
+        parts.append(f"{minutes}m")
+    if not parts:
+        return "under a minute left"
+    return " ".join(parts) + " left"
