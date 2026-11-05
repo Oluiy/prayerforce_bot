@@ -8,13 +8,15 @@ async def get(quiz_id):
     return await db.quiz.find_unique(where={"id": quiz_id})
 
 
-async def create(quiz_type, week_start, is_active):
+async def create(quiz_type, week_start, is_active=False, opens_at=None, closes_at=None):
     return await db.quiz.create(
         data={
             "weekStart": week_start,
             "isActive": is_active,
             "isClosed": False,
             "type": quiz_type,
+            "opensAt": opens_at,
+            "closesAt": closes_at,
         }
     )
 
@@ -79,12 +81,64 @@ async def deactivate(quiz_id):
     return await db.quiz.update(where={"id": quiz_id}, data={"isActive": False})
 
 
-async def close(quiz_id):
-    return await db.quiz.update(where={"id": quiz_id}, data={"isActive": False, "isClosed": True})
+async def close(quiz_id, closed_early_by=None):
+    data = {"isActive": False, "isClosed": True}
+    if closed_early_by:
+        data["closedEarlyBy"] = str(closed_early_by)
+    return await db.quiz.update(where={"id": quiz_id}, data=data)
 
 
 async def close_all_active(quiz_type):
     await db.quiz.update_many(
         where={"type": quiz_type, "isActive": True},
         data={"isActive": False, "isClosed": True},
+    )
+
+async def set_schedule(quiz_id, opens_at, closes_at):
+    return await db.quiz.update(
+        where={"id": quiz_id}, data={"opensAt": opens_at, "closesAt": closes_at}
+    )
+
+
+async def set_type(quiz_id, quiz_type):
+    return await db.quiz.update(where={"id": quiz_id}, data={"type": quiz_type})
+
+
+async def count_questions(quiz_id) -> int:
+    return await db.question.count(where={"quizId": quiz_id})
+
+
+async def find_due_to_open(now):
+    """Quizzes whose opening time has arrived but which aren't open yet."""
+    return await db.quiz.find_many(
+        where={"isActive": False, "isClosed": False, "opensAt": {"lte": now}},
+        order={"opensAt": "asc"},
+    )
+
+
+async def find_due_to_close(now):
+    """Open quizzes whose closing time has passed."""
+    return await db.quiz.find_many(
+        where={"isActive": True, "isClosed": False, "closesAt": {"lte": now}},
+        order={"closesAt": "asc"},
+    )
+
+
+async def find_scheduled():
+    """Quizzes waiting to open."""
+    return await db.quiz.find_many(
+        where={"isActive": False, "isClosed": False}, order={"opensAt": "asc"}
+    )
+
+
+async def find_open():
+    """Quizzes members can take right now."""
+    return await db.quiz.find_many(
+        where={"isActive": True, "isClosed": False}, order={"closesAt": "asc"}
+    )
+
+
+async def find_recently_closed(limit=5):
+    return await db.quiz.find_many(
+        where={"isClosed": True}, order={"createdAt": "desc"}, take=limit
     )

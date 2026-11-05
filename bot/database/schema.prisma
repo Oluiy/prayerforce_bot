@@ -66,6 +66,13 @@ model Quiz {
   isActive   Boolean     @default(false)
   isClosed   Boolean     @default(false)
   type       String      @default("daily") 
+  createdAt  DateTime    @default(now())
+  // When this quiz should open and close. Set by the admin when the quiz is
+  // created. The schedule sweep (jobs/quiz_jobs.py) acts on these.
+  opensAt    DateTime?
+  closesAt   DateTime?
+  // Telegram id of the admin who closed it ahead of closesAt, if any.
+  closedEarlyBy String?
   questions  Question[]
   userScores UserScore[]
 }
