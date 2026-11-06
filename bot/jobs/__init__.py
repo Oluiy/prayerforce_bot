@@ -7,9 +7,14 @@ the clock, and their times come from /settings.
 import logging
 from datetime import time
 
+from config.constants import (
+    ADMIN_EXPIRY_SWEEP_SECONDS,
+    SCHEDULE_SWEEP_SECONDS,
+    TIMEZONE,
+)
+from services import settings_service
 from telegram.ext import Application, JobQueue
 
-from config.constants import ADMIN_EXPIRY_SWEEP_SECONDS, SCHEDULE_SWEEP_SECONDS, TIMEZONE
 from jobs.admin_jobs import expire_admin_grants
 from jobs.birthday_jobs import send_birthday_messages
 from jobs.quiz_jobs import (
@@ -17,7 +22,6 @@ from jobs.quiz_jobs import (
     send_monthly_cumulative_leaderboard,
     sweep_quiz_schedule,
 )
-from services import settings_service
 
 logger = logging.getLogger(__name__)
 

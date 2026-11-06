@@ -1,11 +1,10 @@
-from telegram import BotCommand, BotCommandScopeChat, Update
-from telegram.ext import Application, CommandHandler, ContextTypes
-
 import logging
 
 import messages
 from config import settings
 from services import admin_service
+from telegram import BotCommand, BotCommandScopeChat, Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 from utils.auth import is_admin
 
 logger = logging.getLogger(__name__)

@@ -2,6 +2,7 @@
 
 Keep wording changes here so handlers and jobs only deal with logic.
 """
+
 from services import settings_service
 from utils.dates import format_duration_left, format_moment
 from utils.formatting import format_duration, format_hours_minutes, full_name, rank_label

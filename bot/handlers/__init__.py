@@ -9,11 +9,19 @@ from handlers.admin_manage import (
 from handlers.announcement import announcement_handler
 from handlers.broadcast import manual_broadcast_handler
 from handlers.forms import prayer_request_handler, testimony_handler
-from handlers.info import history_handler, purchase_shirt_handler, sunday_meetings_handler
+from handlers.info import (
+    history_handler,
+    purchase_shirt_handler,
+    sunday_meetings_handler,
+)
 from handlers.leaderboard import leaderboard_callback_handler, leaderboard_handler
 from handlers.menu import commands_handler
 from handlers.quiz_admin import quiz_admin_handler
-from handlers.quiz_schedule import end_quiz_callback_handler, end_quiz_handler, quizzes_handler
+from handlers.quiz_schedule import (
+    end_quiz_callback_handler,
+    end_quiz_handler,
+    quizzes_handler,
+)
 from handlers.quiz_user import quiz_user_handler
 from handlers.settings import settings_handler
 from handlers.start import start_handler, start_text_handler

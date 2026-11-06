@@ -1,12 +1,11 @@
 import logging
 
-from telegram import Update
-from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes
-
 import keyboards
 import messages
 from keyboards import LEADERBOARD_CALLBACK
 from services import quiz_service
+from telegram import Update
+from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes
 
 logger = logging.getLogger(__name__)
 

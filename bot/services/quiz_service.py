@@ -17,8 +17,9 @@ from config.constants import (
     MONTHLY_RECAP_QUESTIONS,
 )
 from repositories import quiz_repository, score_repository, user_repository
-from services import settings_service
 from utils.dates import utc_now
+
+from services import settings_service
 
 logger = logging.getLogger(__name__)
 

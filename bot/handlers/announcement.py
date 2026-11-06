@@ -1,7 +1,6 @@
+import messages
 from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes
-
-import messages
 
 
 async def announcement(update: Update, context: ContextTypes.DEFAULT_TYPE):

@@ -5,16 +5,16 @@ admin can't extend their own time or promote anyone else.
 """
 import logging
 
-from telegram import Update
-from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
-
 import keyboards
 import messages
-from handlers.menu import apply_admin_menu, apply_member_menu
 from repositories import user_repository
 from services import admin_service
+from telegram import Update
 from utils.auth import can_manage_admins
 from utils.dates import TimeParseError, format_duration_left, parse_duration
+
+from handlers.menu import apply_admin_menu, apply_member_menu
+from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 
 logger = logging.getLogger(__name__)
 

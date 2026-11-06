@@ -1,7 +1,6 @@
 """Inline keyboards. Kept apart from handlers so jobs can reuse them."""
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
 import messages
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from utils.formatting import full_name
 
 LEADERBOARD_CALLBACK = "view_leaderboard"

@@ -8,11 +8,10 @@ catches up.
 import datetime
 import logging
 
-from telegram.ext import ContextTypes
-
 import messages
 import notifications
 from services import broadcast_service, quiz_service
+from telegram.ext import ContextTypes
 from utils.dates import is_last_day_of_month, utc_now
 
 logger = logging.getLogger(__name__)

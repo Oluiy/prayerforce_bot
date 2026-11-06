@@ -1,7 +1,6 @@
+import messages
 from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes, ConversationHandler
-
-import messages
 
 
 async def history_command(update: Update, context: ContextTypes.DEFAULT_TYPE):

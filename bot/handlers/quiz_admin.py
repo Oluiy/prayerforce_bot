@@ -1,9 +1,6 @@
 """Admin flow: /generate_quiz -> send notes (text, .txt or PDF) -> AI builds a quiz."""
 import logging
 
-from telegram import Update
-from telegram.ext import CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
-
 import messages
 from services import quiz_service
 from services.document_service import (
@@ -13,8 +10,17 @@ from services.document_service import (
     extract_text,
 )
 from services.gemini_service import GeminiService
-from handlers.quiz_schedule import SCHEDULE_STATES, ask_quiz_type, cancel_scheduling
+from telegram import Update
+from telegram.ext import (
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 from utils.auth import is_primary_admin
+
+from handlers.quiz_schedule import SCHEDULE_STATES, ask_quiz_type, cancel_scheduling
 
 logger = logging.getLogger(__name__)
 

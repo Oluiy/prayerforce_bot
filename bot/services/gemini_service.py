@@ -2,8 +2,6 @@
 import json
 import re
 
-from google import genai
-
 from config import settings
 from config.constants import (
     GEMINI_MODEL,
@@ -12,6 +10,8 @@ from config.constants import (
     MIN_GENERATED_QUESTIONS,
     WORDS_PER_GENERATED_QUESTION,
 )
+from google import genai
+
 from services.prompts import quiz_generation_prompt
 
 

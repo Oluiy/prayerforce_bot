@@ -1,8 +1,7 @@
 import logging
 
-from telegram.ext import ContextTypes
-
 from services.birthday_service import greet_todays_birthdays
+from telegram.ext import ContextTypes
 
 logger = logging.getLogger(__name__)
 

@@ -6,14 +6,13 @@ window, and it can be closed early at any time.
 import datetime
 import logging
 
-from telegram import Update
-from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
-
 import keyboards
 import messages
 import notifications
 from services import quiz_service, settings_service
+from telegram import Update
 from utils.auth import is_admin
+from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 from utils.dates import TimeParseError, format_moment, local_now, parse_when, to_local, to_utc
 
 logger = logging.getLogger(__name__)

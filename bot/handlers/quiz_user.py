@@ -2,12 +2,21 @@
 import datetime
 import random
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, Update
-from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler
-
 import messages
 from repositories import user_repository
 from services import quiz_service, settings_service
+from telegram import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardRemove,
+    Update,
+)
+from telegram.ext import (
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+)
 
 QUIZ_QUESTION = 1
 

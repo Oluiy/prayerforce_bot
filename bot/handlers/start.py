@@ -1,8 +1,7 @@
-from telegram import Update
-from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
-
 import messages
 from repositories import user_repository
+from telegram import Update
+from telegram.ext import CommandHandler, ContextTypes, MessageHandler, filters
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

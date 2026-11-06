@@ -1,11 +1,10 @@
 """Ending temporary admin access when its time runs out."""
 import logging
 
-from telegram.ext import ContextTypes
-
 import messages
 from handlers.menu import apply_member_menu
 from services import admin_service
+from telegram.ext import ContextTypes
 
 logger = logging.getLogger(__name__)
 

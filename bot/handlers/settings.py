@@ -5,13 +5,12 @@ recurring jobs are rescheduled on save.
 """
 import logging
 
-from telegram import Update
-from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
-
 import keyboards
 import messages
 from services import settings_service
+from telegram import Update
 from utils.auth import is_admin
+from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 
 logger = logging.getLogger(__name__)
 
