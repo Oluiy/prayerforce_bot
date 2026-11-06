@@ -68,6 +68,12 @@ async def letters_for_week(key: str | None = None):
     return await love_letter_repository.list_for_week(key or week_key())
 
 
+async def remove_letter(letter_id):
+    """Stop using a letter. Past deliveries keep pointing at it."""
+    await love_letter_repository.deactivate(letter_id)
+    logger.info("Removed love letter %s", letter_id)
+
+
 async def overview(key: str | None = None):
     """Everything the admin hub shows: (week, letters, member_count, served)."""
     key = key or week_key()

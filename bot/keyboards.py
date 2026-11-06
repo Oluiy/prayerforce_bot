@@ -116,6 +116,25 @@ def love_letters_back_markup() -> InlineKeyboardMarkup:
     )
 
 
+def love_letters_list_markup(letters) -> InlineKeyboardMarkup:
+    """`letters` in the same order as the text, so "Remove 1" matches item 1."""
+    rows = [
+        [InlineKeyboardButton(f"Remove {index}", callback_data=f"lldel_{letter.id}")]
+        for index, letter in enumerate(letters, start=1)
+    ]
+    rows.append([InlineKeyboardButton("Back", callback_data="ll_home")])
+    return InlineKeyboardMarkup(rows)
+
+
+def love_letters_delete_confirm_markup(letter_id) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("Yes, remove it", callback_data=f"lldelok_{letter_id}")],
+            [InlineKeyboardButton("Keep it", callback_data="ll_list")],
+        ]
+    )
+
+
 def love_letters_member_markup(choices) -> InlineKeyboardMarkup:
     """`choices` is a list of (chat_id, label)."""
     rows = [

@@ -49,6 +49,21 @@ async def _hub_view():
     )
 
 
+async def _show_letters(query, note: str | None = None):
+    """Render this week's letters with a Remove button per item."""
+    letters = await love_letter_service.letters_for_week()
+    text = messages.love_letters_list(letters)
+    if note:
+        text = f"{note}\n\n{text}"
+    markup = (
+        keyboards.love_letters_list_markup(letters)
+        if letters
+        else keyboards.love_letters_back_markup()
+    )
+    await query.edit_message_text(text, reply_markup=markup, parse_mode="HTML")
+    return HUB
+
+
 async def _ask_letter(send, context, member):
     """Show this week's letters and remember who they're for."""
     letters = await love_letter_service.letters_for_week()
@@ -108,13 +123,52 @@ async def hub_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return HUB
 
     if data == "ll_list":
+        return await _show_letters(query)
+
+    if data.startswith("lldel_"):
+        letter_id = data.replace("lldel_", "")
         letters = await love_letter_service.letters_for_week()
+        index = next(
+            (i for i, letter in enumerate(letters, start=1) if letter.id == letter_id),
+            None,
+        )
+        letter = next((letter for letter in letters if letter.id == letter_id), None)
+        if letter is None:
+            await query.edit_message_text(
+                messages.LOVE_LETTERS_LETTER_GONE,
+                reply_markup=keyboards.love_letters_back_markup(),
+            )
+            return HUB
+
         await query.edit_message_text(
-            messages.love_letters_list(letters),
-            reply_markup=keyboards.love_letters_back_markup(),
+            messages.love_letters_confirm_delete(index, letter.body),
+            reply_markup=keyboards.love_letters_delete_confirm_markup(letter.id),
             parse_mode="HTML",
         )
         return HUB
+
+    if data.startswith("lldelok_"):
+        letter_id = data.replace("lldelok_", "")
+        letters = await love_letter_service.letters_for_week()
+        letter = next((letter for letter in letters if letter.id == letter_id), None)
+        if letter is None:
+            await query.edit_message_text(
+                messages.LOVE_LETTERS_LETTER_GONE,
+                reply_markup=keyboards.love_letters_back_markup(),
+            )
+            return HUB
+
+        try:
+            await love_letter_service.remove_letter(letter.id)
+        except Exception:
+            logger.exception("Could not remove love letter %s", letter.id)
+            await query.edit_message_text(messages.LOVE_LETTERS_SAVE_FAILED)
+            return ConversationHandler.END
+
+        remaining = await love_letter_service.letters_for_week()
+        return await _show_letters(
+            query, note=messages.love_letter_deleted(len(remaining), letter.body)
+        )
 
     if data == "ll_add":
         await query.edit_message_text(messages.LOVE_LETTERS_ASK_TEXT, parse_mode="HTML")
@@ -200,8 +254,8 @@ async def receive_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(messages.LOVE_LETTERS_ASK_MEMBER)
         return PICK_MEMBER
 
-    # A bare number is a Telegram ID, so admins can reach someone not in the
-    # members table by name yet.
+    # A bare number is treated as a Telegram ID. The person must already have
+    # messaged the bot, because every delivery is recorded against a member.
     if term.isdigit():
         member = await user_repository.get_by_chat_id(term)
         if not member:

@@ -637,6 +637,21 @@ def love_letters_ask_letter(name: str, letter_count: int) -> str:
     )
 
 
+def love_letters_confirm_delete(index: int, body: str) -> str:
+    return (
+        f"Remove letter {index}?\n\n"
+        f"<i>{escape(_letter_preview(body, 300))}</i>\n\n"
+        "It won't be sent to anyone. This only affects this week."
+    )
+
+
+def love_letter_deleted(count: int, body: str) -> str:
+    return (
+        f"🗑 Removed: <i>{escape(_letter_preview(body, 120))}</i>\n\n"
+        f"This week now has {count} letter(s)."
+    )
+
+
 def letter_option(index: int, body: str) -> str:
     return f"{index}. {_letter_preview(body, 40)}"
 
