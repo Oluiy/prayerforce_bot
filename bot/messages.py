@@ -2,12 +2,18 @@
 
 Keep wording changes here so handlers and jobs only deal with logic.
 """
+from html import escape
 
 from services import settings_service
 from utils.dates import format_duration_left, format_moment
-from utils.formatting import format_duration, format_hours_minutes, full_name, rank_label
+from utils.formatting import (
+    format_duration,
+    format_hours_minutes,
+    full_name,
+    rank_label,
+)
 
-# --- Command menu ------------------------------------------------------------
+# --- Command menu -------
 BOT_COMMANDS = [
     ("start", "Get to know Tefillah"),
     ("announcement", "To get all necessary annoucement"),
@@ -33,10 +39,10 @@ ADMIN_COMMANDS = [
 ]
 
 
-# --- Welcome & info ----------------------------------------------------------
+# --- Welcome & info ------
 def welcome(first_name: str) -> str:
     return (
-        f"Hi {first_name}! I'm Tefillah, the Prayer Force bot\n\n"
+        f"Hi {escape(first_name)}! I'm Tefillah, the Prayer Force bot\n\n"
         "I’m here to help you stay connected with the Prayer Force family. Through me, you can get helpful information, learn new things, and even have a little fun along the way.\n\n"
         "You can also share your testimonies, because every testimony reminds us of what God is doing among us. If you need prayers, you can send in a prayer request anonymously, and the family will stand with you in prayer.\n\n"
         "Take a moment to explore. There’s something here for you.\n\n"
@@ -124,7 +130,7 @@ QUIZ_GEN_CANCELLED = "Quiz generation cancelled."
 
 
 def quiz_save_failed(error: Exception) -> str:
-    return f"An error occurred while saving the quiz: {error}"
+    return f"An error occurred while saving the quiz: {escape(str(error))}"
 
 
 def quiz_generated(question_count: int) -> str:
@@ -180,10 +186,10 @@ def quiz_finished(score: int, total: int, elapsed_seconds: int) -> str:
 
 # --- Leaderboards ------------------------------------------------------------
 LEADERBOARD_EMPTY = (
-    "🏆 *Leaderboard Update*\n\nNo quiz leaderboard right now. "
+    "🏆 <b>Leaderboard Update</b>\n\nNo quiz leaderboard right now. "
     "Results will appear once the next quiz has been taken!"
 )
-LEADERBOARD_TEASER = "🏆 *Leaderboard Update!* 🏆\n\nTap the button below to see who's leading! 👇"
+LEADERBOARD_TEASER = "🏆 <b>Leaderboard Update!</b> 🏆\n\nTap the button below to see who's leading! 👇"
 LEADERBOARD_DETAILS_BUTTON = "View Details 📜"
 LEADERBOARD_UNAVAILABLE = "Leaderboard unavailable"
 LEADERBOARD_POPUP_HEADER = "🎉 Current Standings! 🎉\n\n"
@@ -192,7 +198,7 @@ LEADERBOARD_POPUP_EMPTY = "No scores yet!"
 
 def leaderboard_line(rank: int, entry) -> str:
     time_text = format_duration(entry.timeTakenSeconds or 0)
-    return f"{rank_label(rank)} {full_name(entry.user)}: {entry.score} pts ({time_text})"
+    return f"{rank_label(rank)} {escape(full_name(entry.user))}: {entry.score} pts ({time_text})"
 
 
 def leaderboard(title_suffix: str, entries) -> str:
@@ -213,12 +219,12 @@ def leaderboard_popup(entries) -> str:
 
 
 def monthly_leaderboard(month_label: str, entries) -> str:
-    text = "🎊 *MONTHLY BIBLE QUIZ CHAMPIONS!* 🎊\n\n"
+    text = "🎊 <b>MONTHLY BIBLE QUIZ CHAMPIONS!</b> 🎊\n\n"
     text += f"🕯️ Final Standings for {month_label}\n\n"
     for rank, entry in enumerate(entries):
         time_text = format_hours_minutes(entry.timeTakenSeconds) if entry.timeTakenSeconds else "--"
         text += (
-            f"{rank_label(rank)} {full_name(entry.user)}\n"
+            f"{rank_label(rank)} {escape(full_name(entry.user))}\n"
             f"    📊 Score: {entry.cumulativeScore} pts | "
             f"📝 Quizzes: {entry.totalQuizzesCompleted} | "
             f"⏱️ Time: {time_text}\n\n"
@@ -242,7 +248,7 @@ def quiz_label(quiz_type: str) -> str:
 
 def quiz_open(quiz_type: str, closes_at=None) -> str:
     text = (
-        f"\U0001f4e2 *The {quiz_label(quiz_type)} is now OPEN!* \U0001f4e2\n\n"
+        f"\U0001f4e2 <b>The {quiz_label(quiz_type)} is now OPEN!</b> \U0001f4e2\n\n"
         f"{QUIZ_BLURBS.get(quiz_type, '')}\n"
     )
     if closes_at:
@@ -253,7 +259,7 @@ def quiz_open(quiz_type: str, closes_at=None) -> str:
 
 def quiz_closed_teaser(quiz_type: str) -> str:
     return (
-        f"\U0001f3c6 *{quiz_label(quiz_type)} Closed!* \U0001f3c6\n\n"
+        f"\U0001f3c6 <b>{quiz_label(quiz_type)} Closed!</b> \U0001f3c6\n\n"
         "The results are in! Tap the button below to see who won! \U0001f447"
     )
 
@@ -262,12 +268,12 @@ VIEW_RESULTS_BUTTON = "View Results \U0001f4dc"
 
 
 def daily_winner(first_name: str, score: int) -> str:
-    return f"🏆 *Today's Winner!* 🏆\n\n{first_name}: {score} points"
+    return f"🏆 <b>Today's Winner!</b> 🏆\n\n{escape(first_name)}: {score} points"
 
 
 def monthly_recap_released(question_count: int) -> str:
     return (
-        f"🌟 *MONTHLY MEGA-QUIZ RELEASED!* 🌟\n\n"
+        f"🌟 <b>MONTHLY MEGA-QUIZ RELEASED!</b> 🌟\n\n"
         f"Test your retention of this month's topics!\n"
         f"Contains {question_count} questions from past weeks.\n\n"
         f"👉 /take_quiz to start!"
@@ -276,24 +282,25 @@ def monthly_recap_released(question_count: int) -> str:
 
 # --- Birthdays ---------------------------------------------------------------
 def birthday(first_name: str, mate_names: list[str]) -> str:
-    text = f"🎉 Happy Birthday, {first_name}!"
+    text = f"🎉 Happy Birthday, {escape(first_name)}!"
     if mate_names:
-        text += f"\nYou share your birthday with: {', '.join(mate_names)}!"
+        text += f"\nYou share your birthday with: {escape(', '.join(mate_names))}!"
     return text
 
 
 # --- Scheduling a quiz (admin) -----------------------------------------------
 SCHEDULE_ASK_OPEN = (
-    "🗓️ *When should this quiz open?*\n\n"
-    "Pick a button, or type a time such as `8pm`, `tomorrow 7:30am`, "
-    "`+2h` or `2026-12-01 18:00`."
+    "🗓️ <b>When should this quiz open?</b>\n\n"
+    "Pick a button, or type a time such as <code>8pm</code>, <code>tomorrow 7:30am</code>, "
+    "<code>+2h</code> or <code>2026-12-01 18:00</code>."
 )
 SCHEDULE_ASK_CLOSE = (
-    "⏳ *When should it close?*\n\n"
+    "⏳ <b>When should it close?</b>\n\n"
     "Pick a button, or type a time the same way."
 )
 SCHEDULE_OPEN_NOW_BUTTON = "Open now"
 SCHEDULE_CUSTOM_BUTTON = "Type a time"
+DURATION_CUSTOM_BUTTON = "Type a length"
 SCHEDULE_CANCEL_BUTTON = "Cancel"
 SCHEDULE_CANCELLED = "Scheduling cancelled. The quiz is saved but won't open until you schedule it."
 SCHEDULE_CLOSE_BEFORE_OPEN = "⚠️ The closing time must be after the opening time. Please pick again."
@@ -304,18 +311,18 @@ SCHEDULE_SAVE_FAILED = (
 
 
 def schedule_bad_time(reason: str) -> str:
-    return f"⚠️ {reason}\n\nTry something like `8pm`, `tomorrow 7:30am` or `+2h`."
+    return f"⚠️ {escape(reason)}\n\nTry something like <code>8pm</code>, <code>tomorrow 7:30am</code> or <code>+2h</code>."
 
 
 def schedule_confirmed(question_count: int, opens_at, closes_at, opened_now: bool) -> str:
     if opened_now:
         return (
-            f"✅ *Quiz is now live* with {question_count} questions.\n\n"
+            f"✅ <b>Quiz is now live</b> with {question_count} questions.\n\n"
             f"Closes: {format_moment(closes_at)}\n\n"
             "Members have been notified. Use /end_quiz to close it early."
         )
     return (
-        f"✅ *Quiz scheduled* with {question_count} questions.\n\n"
+        f"✅ <b>Quiz scheduled</b> with {question_count} questions.\n\n"
         f"Opens: {format_moment(opens_at)}\n"
         f"Closes: {format_moment(closes_at)}\n\n"
         "Members will be notified when it opens. Use /quizzes to review it."
@@ -328,9 +335,9 @@ QUIZZES_NOT_AUTHORIZED = "Only admins can view the quiz schedule."
 
 
 def quizzes_overview(open_quizzes, scheduled, recently_closed) -> str:
-    text = "🗂️ *Quiz schedule*\n"
+    text = "🗂️ <b>Quiz schedule</b>\n"
 
-    text += "\n*Open now*\n"
+    text += "\n<b>Open now</b>\n"
     if open_quizzes:
         for quiz in open_quizzes:
             closes = format_moment(quiz.closesAt) if quiz.closesAt else "no closing time set"
@@ -338,7 +345,7 @@ def quizzes_overview(open_quizzes, scheduled, recently_closed) -> str:
     else:
         text += "• none\n"
 
-    text += "\n*Scheduled*\n"
+    text += "\n<b>Scheduled</b>\n"
     if scheduled:
         for quiz in scheduled:
             if quiz.opensAt:
@@ -349,7 +356,7 @@ def quizzes_overview(open_quizzes, scheduled, recently_closed) -> str:
         text += "• none\n"
 
     if recently_closed:
-        text += "\n*Recently closed*\n"
+        text += "\n<b>Recently closed</b>\n"
         for quiz in recently_closed:
             early = " (ended early)" if quiz.closedEarlyBy else ""
             text += f"• {quiz_label(quiz.type)}{early}\n"
@@ -370,21 +377,21 @@ def end_quiz_option(quiz) -> str:
 
 def end_quiz_done(quiz, score_count: int) -> str:
     return (
-        f"✅ *{quiz_label(quiz.type)} closed early.*\n\n"
+        f"✅ <b>{quiz_label(quiz.type)} closed early.</b>\n\n"
         f"{score_count} member(s) took it. The results have been sent out."
     )
 
 
 # --- /settings (admin) ------------------------------------------------------
 SETTINGS_NOT_AUTHORIZED = "Only admins can change settings."
-SETTINGS_HEADER = "⚙️ *Settings*\n\nTap a setting to change it. These take effect right away — no redeploy needed."
+SETTINGS_HEADER = "⚙️ <b>Settings</b>\n\nTap a setting to change it. These take effect right away — no redeploy needed."
 SETTINGS_CANCELLED = "No changes made."
 SETTINGS_SAVE_FAILED = "⚠️ I couldn't save that. Nothing was changed — please try again."
 SETTINGS_CANCEL_BUTTON = "Done"
 
 
 def settings_ask_value(definition, current) -> str:
-    text = f"⚙️ *{definition.label}*\n\nCurrent value: `{definition.to_text(current)}`\n\n"
+    text = f"⚙️ <b>{definition.label}</b>\n\nCurrent value: <code>{escape(definition.to_text(current))}</code>\n\n"
     if definition.hint:
         text += f"_{definition.hint}_\n\n"
     text += "Send the new value, or /cancel to leave it unchanged."
@@ -392,11 +399,11 @@ def settings_ask_value(definition, current) -> str:
 
 
 def settings_saved(definition, value) -> str:
-    return f"✅ *{definition.label}* is now `{definition.to_text(value)}`."
+    return f"✅ <b>{definition.label}</b> is now <code>{escape(definition.to_text(value))}</code>."
 
 
 def settings_rejected(reason: str) -> str:
-    return f"⚠️ {reason}\n\nSend another value, or /cancel to leave it unchanged."
+    return f"⚠️ {escape(reason)}\n\nSend another value, or /cancel to leave it unchanged."
 
 
 def settings_option(definition, current) -> str:
@@ -408,7 +415,7 @@ ADMIN_MANAGE_NOT_AUTHORIZED = (
     "Only a permanent admin can hand out or take back admin access."
 )
 MAKE_ADMIN_ASK_MEMBER = (
-    "👤 *Who should get admin access?*\n\n"
+    "👤 <b>Who should get admin access?</b>\n\n"
     "Send part of their name, or their Telegram ID number.\n\n"
     "Send /cancel to stop."
 )
@@ -417,11 +424,16 @@ MAKE_ADMIN_NO_MATCH = (
     "Telegram ID number instead."
 )
 MAKE_ADMIN_PICK_MEMBER = "Which one did you mean?"
-MAKE_ADMIN_ASK_DURATION = (
-    "⏳ *How long should they have access?*\n\n"
-    "Pick a button, or type a length such as `30m`, `4h` or `2d`."
-)
+def make_admin_ask_duration(name: str) -> str:
+    return (
+        f"⏳ <b>How long should {escape(name)} have access?</b>\n\n"
+        "Pick a button, or type a length such as <code>30m</code>, <code>4h</code> or <code>2d</code>."
+    )
 MAKE_ADMIN_CANCELLED = "No admin access was given."
+MENU_EXPIRED = (
+    "That menu is no longer active \u2014 the bot may have restarted. "
+    "Please run the command again."
+)
 ADMIN_GRANT_SAVE_FAILED = "⚠️ I couldn't save that. Nothing was changed — please try again."
 
 REVOKE_ADMIN_NONE = "No one currently has temporary admin access."
@@ -432,22 +444,52 @@ ADMINS_NONE_TEMPORARY = "No one has temporary access right now."
 
 
 def admin_grant_rejected(reason: str) -> str:
-    return f"⚠️ {reason}"
+    return f"⚠️ {escape(reason)}"
 
 
 def admin_duration_rejected(reason: str) -> str:
-    return f"⚠️ {reason}\n\nTry something like `30m`, `4h` or `2d`."
+    return f"⚠️ {escape(reason)}\n\nTry something like <code>30m</code>, <code>4h</code> or <code>2d</code>."
 
 
-def member_label(user, telegram_id=None) -> str:
+def member_name(user, telegram_id=None) -> str:
+    """Plain display name. Button labels aren't HTML-parsed, so use this there."""
     if user is not None:
         return full_name(user)
     return f"ID {telegram_id}"
 
 
+def member_label(user, telegram_id=None) -> str:
+    """Escaped display name, for use inside an HTML message."""
+    return escape(member_name(user, telegram_id))
+
+
+def disambiguate(entries) -> list[tuple[str, str]]:
+    """Turn (user, telegram_id) pairs into (telegram_id, label) pairs.
+
+    Members often share a first name, so any label that would read the same
+    as another gets its Telegram ID appended. Labels are plain text, for
+    buttons; escape them before putting them in an HTML message.
+    """
+    names = [member_name(user, telegram_id) for user, telegram_id in entries]
+    repeated = {name for name in names if names.count(name) > 1}
+    return [
+        (str(telegram_id), f"{name} \u00b7 {telegram_id}" if name in repeated else name)
+        for (_, telegram_id), name in zip(entries, names)
+    ]
+
+
+def member_matches(term: str, shown: int, total: int) -> str:
+    if total > shown:
+        return (
+            f"{total} members match \u201c{term}\u201d. Here are the first {shown} \u2014 "
+            "send more of the name to narrow it down, or send their Telegram ID."
+        )
+    return f"{total} members match \u201c{term}\u201d. Which one did you mean?"
+
+
 def admin_granted(label: str, until) -> str:
     return (
-        f"✅ *{label}* is now an admin.\n\n"
+        f"✅ <b>{label}</b> is now an admin.\n\n"
         f"Access ends {format_moment(until)} ({format_duration_left(until)}).\n\n"
         "Use /admins to review, or /revoke_admin to end it sooner."
     )
@@ -456,7 +498,7 @@ def admin_granted(label: str, until) -> str:
 def admin_granted_notice(until) -> str:
     """Sent to the member themselves."""
     return (
-        "🔑 *You've been given admin access to Tefillah.*\n\n"
+        "🔑 <b>You've been given admin access to Tefillah.</b>\n\n"
         f"It lasts until {format_moment(until)}.\n\n"
         "Check your command menu for what you can now do. "
         "Your access ends automatically — nothing to remember."
@@ -464,7 +506,7 @@ def admin_granted_notice(until) -> str:
 
 
 def admin_revoked(label: str) -> str:
-    return f"✅ *{label}* no longer has admin access."
+    return f"✅ <b>{label}</b> no longer has admin access."
 
 
 ADMIN_REVOKED_NOTICE = (
@@ -477,17 +519,17 @@ ADMIN_EXPIRED_NOTICE = (
 
 def admins_overview(permanent, temporary) -> str:
     """`permanent` and `temporary` are lists of (label, extra) pairs."""
-    text = "🛡️ *Admins*\n\n*Permanent*\n"
+    text = "🛡️ <b>Admins</b>\n\n<b>Permanent</b>\n"
     for label, extra in permanent:
-        text += f"• {label}{extra}\n"
+        text += f"• {escape(label)}{extra}\n"
 
-    text += "\n*Temporary*\n"
+    text += "\n<b>Temporary</b>\n"
     if temporary:
         for label, extra in temporary:
-            text += f"• {label}{extra}\n"
+            text += f"• {escape(label)}{extra}\n"
     else:
         text += "• none\n"
 
-    text += "\nPermanent admins are set in the server's `.env` file. "
+    text += "\nPermanent admins are set in the server's <code>.env</code> file. "
     text += "Temporary access is given with /make_admin."
     return text

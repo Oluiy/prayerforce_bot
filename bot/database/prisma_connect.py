@@ -8,10 +8,7 @@ from prisma import Prisma
 
 logger = logging.getLogger(__name__)
 
-# Prisma runs its query engine as a separate process and polls it until it
-# answers. A cold start can take longer than the 10 second default, which
-# surfaces as "Could not connect to the query engine" even though the
-# database itself is fine.
+# Prisma timeout 10 seconds 
 db = Prisma(connect_timeout=timedelta(seconds=DATABASE_CONNECT_TIMEOUT_SECONDS))
 
 
@@ -52,7 +49,6 @@ def missing_models() -> list[str]:
 
 def warn_if_client_is_stale() -> list[str]:
     """Say loudly at startup if the client doesn't match the schema.
-
     Without this the bot looks healthy and only fails later, when an admin
     tries to save something.
     """

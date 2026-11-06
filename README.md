@@ -10,7 +10,7 @@ Operations we want it to do:
 - Also it should help to filter out the most recent information for members
 - Give them pre-services time, post-service time, what was discussed Delgated to Olaoluwa
 - Use it to send birthday messages also. Delegated to Honeybell
-- Also very important, varieties of LOVE LETTERS. Delegated 
+- Also very important, varieties of LOVE LETTERS. Delegated to David 
 
 
 ## Project structure

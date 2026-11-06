@@ -9,8 +9,15 @@ import keyboards
 import messages
 from services import settings_service
 from telegram import Update
+from telegram.ext import (
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 from utils.auth import is_admin
-from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +40,7 @@ async def show_settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         messages.SETTINGS_HEADER,
         reply_markup=keyboards.settings_markup(settings_service.current_values()),
-        parse_mode="Markdown",
+        parse_mode="HTML",
     )
     return WAITING_VALUE
 
@@ -55,7 +62,7 @@ async def chose_setting(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["editing_setting"] = key
     definition = settings_service.definition(key)
     await query.edit_message_text(
-        messages.settings_ask_value(definition, settings_service.get(key)), parse_mode="Markdown"
+        messages.settings_ask_value(definition, settings_service.get(key)), parse_mode="HTML"
     )
     return WAITING_VALUE
 
@@ -63,13 +70,14 @@ async def chose_setting(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def receive_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
     key = context.user_data.get("editing_setting")
     if not key:
+        await update.message.reply_text(messages.MENU_EXPIRED)
         return ConversationHandler.END
 
     definition = settings_service.definition(key)
     try:
         value = definition.parse(update.message.text)
     except ValueError as e:
-        await update.message.reply_text(messages.settings_rejected(str(e)), parse_mode="Markdown")
+        await update.message.reply_text(messages.settings_rejected(str(e)), parse_mode="HTML")
         return WAITING_VALUE
 
     try:
@@ -79,7 +87,7 @@ async def receive_value(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(messages.SETTINGS_SAVE_FAILED)
         return ConversationHandler.END
 
-    await update.message.reply_text(messages.settings_saved(definition, value), parse_mode="Markdown")
+    await update.message.reply_text(messages.settings_saved(definition, value), parse_mode="HTML")
 
     # A changed job time needs the job put back on the queue at the new time.
     if definition.kind == settings_service.TIME and _on_change:

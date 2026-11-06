@@ -48,7 +48,7 @@ async def send_monthly_cumulative_leaderboard(context: ContextTypes.DEFAULT_TYPE
     await broadcast_service.broadcast_text(
         context.bot,
         messages.monthly_leaderboard(today.strftime("%B %Y"), entries),
-        parse_mode="Markdown",
+        parse_mode="HTML",
     )
     logger.info("Monthly cumulative leaderboard sent for %s", month_year)
 
@@ -74,5 +74,5 @@ async def generate_monthly_recap(context: ContextTypes.DEFAULT_TYPE):
 
     quiz, question_count = result
     await broadcast_service.broadcast_text(
-        context.bot, messages.monthly_recap_released(question_count), parse_mode="Markdown"
+        context.bot, messages.monthly_recap_released(question_count), parse_mode="HTML"
     )

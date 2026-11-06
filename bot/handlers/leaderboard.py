@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 async def view_leaderboard(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await quiz_service.get_leaderboard():
-        await update.message.reply_text(messages.LEADERBOARD_EMPTY, parse_mode="Markdown")
+        await update.message.reply_text(messages.LEADERBOARD_EMPTY, parse_mode="HTML")
         return
 
     await update.message.reply_text(
         messages.LEADERBOARD_TEASER,
         reply_markup=keyboards.view_results_markup(messages.LEADERBOARD_DETAILS_BUTTON),
-        parse_mode="Markdown",
+        parse_mode="HTML",
     )
 
 

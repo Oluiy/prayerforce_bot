@@ -1,7 +1,6 @@
 """Inline keyboards. Kept apart from handlers so jobs can reuse them."""
 import messages
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from utils.formatting import full_name
 
 LEADERBOARD_CALLBACK = "view_leaderboard"
 
@@ -59,10 +58,11 @@ def settings_markup(values) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(rows)
 
 
-def member_pick_markup(members) -> InlineKeyboardMarkup:
+def member_pick_markup(choices) -> InlineKeyboardMarkup:
+    """`choices` is a list of (chat_id, label)."""
     rows = [
-        [InlineKeyboardButton(full_name(m), callback_data=f"pickadmin_{m.chatId}")]
-        for m in members
+        [InlineKeyboardButton(label, callback_data=f"pickadmin_{chat_id}")]
+        for chat_id, label in choices
     ]
     rows.append([InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="pickadmin_cancel")])
     return InlineKeyboardMarkup(rows)
@@ -73,7 +73,7 @@ def duration_markup(presets) -> InlineKeyboardMarkup:
     rows = [
         [InlineKeyboardButton(label, callback_data=f"dur_{minutes}")] for label, minutes in presets
     ]
-    rows.append([InlineKeyboardButton(messages.SCHEDULE_CUSTOM_BUTTON, callback_data="dur_custom")])
+    rows.append([InlineKeyboardButton(messages.DURATION_CUSTOM_BUTTON, callback_data="dur_custom")])
     rows.append([InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="dur_cancel")])
     return InlineKeyboardMarkup(rows)
 

@@ -31,17 +31,28 @@ async def list_by_birthday(day):
     return [u for u in users if (u.birthday.month, u.birthday.day) == (day.month, day.day)]
 
 
-async def search_by_name(term: str, limit: int = 8):
+MEMBER_SEARCH_LIMIT = 10
+
+
+def _name_matches(term: str):
+    return {
+        "OR": [
+            {"firstName": {"contains": term, "mode": "insensitive"}},
+            {"lastName": {"contains": term, "mode": "insensitive"}},
+        ]
+    }
+
+
+async def search_by_name(term: str, limit: int = MEMBER_SEARCH_LIMIT):
     """Members whose first or last name contains `term`, case-insensitively."""
     return await db.user.find_many(
-        where={
-            "OR": [
-                {"firstName": {"contains": term, "mode": "insensitive"}},
-                {"lastName": {"contains": term, "mode": "insensitive"}},
-            ]
-        },
-        take=limit,
+        where=_name_matches(term), take=limit, order={"firstName": "asc"}
     )
+
+
+async def count_by_name(term: str) -> int:
+    """How many members match, including any beyond the page we show."""
+    return await db.user.count(where=_name_matches(term))
 
 
 async def get_many_by_chat_ids(chat_ids):

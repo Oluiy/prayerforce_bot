@@ -44,15 +44,20 @@ async def main():
     # Live temporary-admin grants, so access survives a restart.
     await admin_service.load()
 
-    application = (
-        ApplicationBuilder().token(settings.telegram_bot_token).post_init(set_bot_commands).build()
-    )
+    application = ApplicationBuilder().token(settings.telegram_bot_token).build()
     register_handlers(application)
     schedule_jobs(application.job_queue)
     # Lets /settings move a job's time without a restart.
     set_change_callback(reschedule_jobs)
 
     await application.initialize()
+    # Not done via post_init: python-telegram-bot only runs that from
+    # run_polling()/run_webhook(), and we drive the lifecycle ourselves.
+    try:
+        await set_bot_commands(application)
+    except Exception:
+        logger.exception("Could not set the command menus")
+
     await application.start()
     await application.updater.start_polling()
     logger.info("Bot is up and running! 🚀")

@@ -11,9 +11,23 @@ import messages
 import notifications
 from services import quiz_service, settings_service
 from telegram import Update
+from telegram.ext import (
+    CallbackQueryHandler,
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 from utils.auth import is_admin
-from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, ConversationHandler, MessageHandler, filters
-from utils.dates import TimeParseError, format_moment, local_now, parse_when, to_local, to_utc
+from utils.dates import (
+    TimeParseError,
+    format_moment,
+    local_now,
+    parse_when,
+    to_local,
+    to_utc,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +103,7 @@ async def chose_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     presets = _store(context, "sched_open", open_presets())
     await query.edit_message_text(
-        messages.SCHEDULE_ASK_OPEN, reply_markup=keyboards.schedule_markup(presets), parse_mode="Markdown"
+        messages.SCHEDULE_ASK_OPEN, reply_markup=keyboards.schedule_markup(presets), parse_mode="HTML"
     )
     return CHOOSING_OPEN
 
@@ -100,7 +114,7 @@ async def chose_open(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "sched_cancel":
         return await cancel_scheduling(update, context)
     if query.data == "sched_custom":
-        await query.edit_message_text(messages.SCHEDULE_ASK_OPEN, parse_mode="Markdown")
+        await query.edit_message_text(messages.SCHEDULE_ASK_OPEN, parse_mode="HTML")
         return CHOOSING_OPEN
 
     index = int(query.data.rsplit("_", 1)[1])
@@ -112,7 +126,7 @@ async def typed_open(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         opens_at = parse_when(update.message.text)
     except TimeParseError as e:
-        await update.message.reply_text(messages.schedule_bad_time(str(e)), parse_mode="Markdown")
+        await update.message.reply_text(messages.schedule_bad_time(str(e)), parse_mode="HTML")
         return CHOOSING_OPEN
     return await _ask_close(update.message.reply_text, context, opens_at)
 
@@ -121,7 +135,7 @@ async def _ask_close(send, context, opens_at):
     context.user_data["scheduling_opens_at"] = opens_at
     presets = _store(context, "sched_close", close_presets(opens_at))
     await send(
-        messages.SCHEDULE_ASK_CLOSE, reply_markup=keyboards.schedule_markup(presets), parse_mode="Markdown"
+        messages.SCHEDULE_ASK_CLOSE, reply_markup=keyboards.schedule_markup(presets), parse_mode="HTML"
     )
     return CHOOSING_CLOSE
 
@@ -132,7 +146,7 @@ async def chose_close(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "sched_cancel":
         return await cancel_scheduling(update, context)
     if query.data == "sched_custom":
-        await query.edit_message_text(messages.SCHEDULE_ASK_CLOSE, parse_mode="Markdown")
+        await query.edit_message_text(messages.SCHEDULE_ASK_CLOSE, parse_mode="HTML")
         return CHOOSING_CLOSE
 
     index = int(query.data.rsplit("_", 1)[1])
@@ -144,7 +158,7 @@ async def typed_close(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         closes_at = parse_when(update.message.text)
     except TimeParseError as e:
-        await update.message.reply_text(messages.schedule_bad_time(str(e)), parse_mode="Markdown")
+        await update.message.reply_text(messages.schedule_bad_time(str(e)), parse_mode="HTML")
         return CHOOSING_CLOSE
     return await _finish(update.message.reply_text, update, context, closes_at)
 
@@ -178,7 +192,7 @@ async def _finish(send, update, context, closes_at):
 
     await send(
         messages.schedule_confirmed(question_count, opens_at, closes_at, opened_now),
-        parse_mode="Markdown",
+        parse_mode="HTML",
     )
     _clear(context)
     return ConversationHandler.END
@@ -229,7 +243,7 @@ async def list_quizzes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(
-        messages.quizzes_overview(open_quizzes, scheduled, closed), parse_mode="Markdown"
+        messages.quizzes_overview(open_quizzes, scheduled, closed), parse_mode="HTML"
     )
 
 
@@ -266,7 +280,7 @@ async def confirm_end_quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     quiz, scores = result
-    await query.edit_message_text(messages.end_quiz_done(quiz, len(scores)), parse_mode="Markdown")
+    await query.edit_message_text(messages.end_quiz_done(quiz, len(scores)), parse_mode="HTML")
     await notifications.announce_quiz_closed(context.bot, quiz, scores)
 
 
