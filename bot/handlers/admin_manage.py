@@ -177,6 +177,7 @@ make_admin_handler = ConversationHandler(
         ],
     },
     fallbacks=[CommandHandler("cancel", cancel_make_admin)],
+    conversation_timeout=5 * 60,
 )
 
 

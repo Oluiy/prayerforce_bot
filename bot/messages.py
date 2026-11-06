@@ -126,6 +126,16 @@ QUIZ_GEN_NO_NOTES = "Please send the notes either as text or a PDF/text file."
 QUIZ_GEN_GENERATING = "Generating quiz questions with AI... Please wait."
 QUIZ_GEN_NO_QUESTIONS = "Failed to generate questions. Please try again with clearer notes."
 QUIZ_GEN_UNEXPECTED_ERROR = "An unexpected error occurred. Please try again."
+QUIZ_GEN_AI_FAILED = (
+    "The AI could not generate the quiz, so nothing was saved. This is usually a "
+    "problem with the GOOGLE_API_KEY or the model being unavailable - please try again."
+)
+
+
+def quiz_generation_rejected(reason: str) -> str:
+    return f"I couldn't use those notes: {reason}"
+
+
 QUIZ_GEN_CANCELLED = "Quiz generation cancelled."
 
 

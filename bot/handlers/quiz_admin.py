@@ -69,7 +69,18 @@ async def receive_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return WAITING_NOTES
 
         await status_msg.edit_text(messages.QUIZ_GEN_GENERATING)
-        questions_data = gemini_service.generate_quiz_from_notes(notes)
+        try:
+            questions_data = gemini_service.generate_quiz_from_notes(notes)
+        except ValueError as e:
+            # Our own validation (empty notes, too long). Safe to show as-is.
+            await status_msg.edit_text(messages.quiz_generation_rejected(str(e)))
+            return WAITING_NOTES
+        except Exception:
+            # API key, quota or model failure. Log the detail, tell the admin
+            # something they can act on instead of "unexpected error".
+            logger.exception("Quiz generation failed")
+            await status_msg.edit_text(messages.QUIZ_GEN_AI_FAILED)
+            return WAITING_NOTES
 
         if not questions_data:
             await status_msg.edit_text(messages.QUIZ_GEN_NO_QUESTIONS)
@@ -111,4 +122,8 @@ quiz_admin_handler = ConversationHandler(
         **SCHEDULE_STATES,
     },
     fallbacks=[CommandHandler("cancel", cancel_quiz_gen)],
+    # Longest flow: notes, AI generation, then type/open/close choices.
+    # Without this a half-finished conversation stays open forever and eats
+    # the user's next text message.
+    conversation_timeout=15 * 60,
 )

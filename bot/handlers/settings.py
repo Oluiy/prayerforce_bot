@@ -115,4 +115,6 @@ settings_handler = ConversationHandler(
         ],
     },
     fallbacks=[CommandHandler("cancel", cancel_settings)],
+    # Don't leave the admin stuck in this menu if they walk away.
+    conversation_timeout=5 * 60,
 )
