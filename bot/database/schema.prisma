@@ -21,6 +21,7 @@ model User {
   payments             Payment[]
   scores               UserScore[]
   cumulativeMonthly    DailyQuizCumulative[]
+  loveLetterDeliveries LoveLetterDelivery[]
 }
 
 model Payment {
@@ -125,4 +126,39 @@ model DailyQuizCumulative {
   lastUpdated DateTime @default(now()) @updatedAt
 
   @@unique([userId, monthYear])
+}
+
+// One love letter. Letters are written per week, so each row carries the week
+// it belongs to and a send only draws from the current week's set.
+model LoveLetter {
+  id        String   @id @default(uuid())
+  body      String
+  weekKey   String   // e.g. "2026-W45", computed in TIMEZONE
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveries LoveLetterDelivery[]
+
+  @@index([weekKey, isActive])
+}
+
+// Every letter that went out, so we can report on a send and avoid serving the
+// same member twice in a week. `kind` is "weekly" (one per member per week) or
+// "direct" (an extra letter an admin sent to one person).
+model LoveLetterDelivery {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  letterId String
+  letter   LoveLetter @relation(fields: [letterId], references: [id])
+  kind     String   @default("weekly")
+  weekKey  String?  // null for direct sends, which don't use up the week
+  batchId  String   // groups one send run together for reporting
+  sentAt   DateTime @default(now())
+
+  // Postgres treats NULLs as distinct, so direct sends never collide here.
+  @@unique([userId, weekKey, kind])
+  @@index([batchId])
+  @@index([weekKey, kind])
 }
