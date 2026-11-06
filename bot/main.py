@@ -5,7 +5,7 @@ import logging
 from telegram.ext import ApplicationBuilder
 
 from config import settings
-from database.prisma_connect import connect_with_retry, db
+from database.prisma_connect import connect_with_retry, db, warn_if_client_is_stale
 from handlers import register_handlers
 from handlers.menu import set_bot_commands
 from handlers.settings import set_change_callback
@@ -35,6 +35,7 @@ async def main():
     try:
         await connect_with_retry()
         logger.info("Database connected successfully!")
+        warn_if_client_is_stale()
     except Exception as e:
         logger.error("Failed to connect to database: %s", e)
         return
