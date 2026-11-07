@@ -533,3 +533,22 @@ def admins_overview(permanent, temporary) -> str:
     text += "\nPermanent admins are set in the server's <code>.env</code> file. "
     text += "Temporary access is given with /make_admin."
     return text
+
+
+# --- Weekly meeting reminders -----------------------------------------------
+def meeting_reminder(service_day: str, pre_service_time: str,post_service_time: str | None = None,) -> str:
+    reminder = (
+        f"🔔 <b>REMINDER: {service_day.upper()} SERVICE TOMORROW!</b>\n\n"
+        "Get ready for our time of prayer and fellowship.\n\n"
+        f"🙏 <b>Pre-service Prayer:</b> {pre_service_time}\n"
+    )
+
+    if post_service_time:
+        reminder += (f"🙏 <b>Post-service Prayer:</b> {post_service_time}\n")
+
+    reminder += (
+        "\nAbba looks forward to having you there!\n\n"
+        "Stay prepared and stay connected. ❤️"
+    )
+
+    return reminder
