@@ -45,4 +45,5 @@ manual_broadcast_handler = ConversationHandler(
         WAITING_BROADCAST_MESSAGE: [MessageHandler(filters.ALL & ~filters.COMMAND, receive_broadcast_message)],
     },
     fallbacks=[CommandHandler("cancel", cancel_broadcast)],
+    conversation_timeout=5 * 60,
 )
