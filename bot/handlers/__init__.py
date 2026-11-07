@@ -15,6 +15,7 @@ from handlers.info import (
     sunday_meetings_handler,
 )
 from handlers.leaderboard import leaderboard_callback_handler, leaderboard_handler
+from handlers.love_letters import love_letters_handler
 from handlers.menu import commands_handler
 from handlers.quiz_admin import quiz_admin_handler
 from handlers.quiz_schedule import (
@@ -46,6 +47,7 @@ HANDLERS = [
     make_admin_handler,
     revoke_admin_handler,
     revoke_admin_callback_handler,
+    love_letters_handler,
     quiz_user_handler,
     leaderboard_handler,
     leaderboard_callback_handler,

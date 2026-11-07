@@ -36,6 +36,8 @@ ADMIN_COMMANDS = [
     ("admins", "See who has admin access"),
     ("make_admin", "Give a member admin access for a while"),
     ("revoke_admin", "End someone's temporary admin access"),
+    ("love_letters", "Send love letters to members"),
+    ("add_letter", "Write a love letter for this week"),
 ]
 
 
@@ -543,3 +545,129 @@ def admins_overview(permanent, temporary) -> str:
     text += "\nPermanent admins are set in the server's <code>.env</code> file. "
     text += "Temporary access is given with /make_admin."
     return text
+
+
+# --- Love letters (admin) ----------------------------------------------------
+LOVE_LETTERS_NOT_AUTHORIZED = "Only admins can send love letters."
+LOVE_LETTERS_CANCELLED = "Love letters closed. Nothing was sent."
+LOVE_LETTERS_SAVE_FAILED = "I couldn't save that letter. Nothing was changed - please try again."
+LOVE_LETTERS_SEND_FAILED = (
+    "Something went wrong while sending. Check the logs - some letters may "
+    "already have gone out, so review before trying again."
+)
+
+
+def _letter_preview(body: str, limit: int = 90) -> str:
+    text = " ".join(body.split())
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+
+
+def love_letters_hub(week: str, letter_count: int, member_count: int, served: int) -> str:
+    if letter_count:
+        pool = f"📝 <b>{letter_count}</b> letter(s) ready for this week"
+    else:
+        pool = "📝 <b>No letters for this week yet</b> — add one first"
+    return (
+        "💌 <b>Love letters</b>\n\n"
+        f"Week <b>{escape(week)}</b>\n"
+        f"{pool}\n"
+        f"👥 {member_count} member(s) can receive them\n"
+        f"✅ {served} already had one this week"
+    )
+
+
+LOVE_LETTERS_ASK_TEXT = (
+    "Send me the love letter text.\n\n"
+    "Use <b>{name}</b> where the member's first name should go. If their name "
+    "is missing it becomes \"prayer force member\".\n\n"
+    "Send /cancel when you're finished."
+)
+
+
+def love_letter_saved(count: int, week: str) -> str:
+    return (
+        f"✅ Saved. This week ({escape(week)}) now has {count} letter(s).\n\n"
+        "Send another, or /cancel when you're done."
+    )
+
+
+def love_letters_rejected(reason: str) -> str:
+    return f"I couldn't save that letter: {escape(reason)}"
+
+
+def love_letters_list(letters) -> str:
+    if not letters:
+        return "💌 No letters for this week yet. Add one with /add_letter."
+    lines = [
+        f"{index}. {escape(_letter_preview(letter.body, 120))}"
+        for index, letter in enumerate(letters, start=1)
+    ]
+    return "💌 <b>This week's letters</b>\n\n" + "\n\n".join(lines)
+
+
+def love_letters_preview(letter_count: int, member_count: int) -> str:
+    return (
+        f"Send this week's letters to <b>{member_count}</b> member(s)?\n\n"
+        f"Each person gets one of the <b>{letter_count}</b> letters at random. "
+        "Anyone who already received one this week will be skipped."
+    )
+
+
+def love_letters_report(report) -> str:
+    return (
+        "💌 <b>Love letters sent</b>\n\n"
+        f"✅ Sent: {report.sent}\n"
+        f"⚠️ Failed: {report.failed}\n"
+        f"⏭️ Skipped (already had one): {report.skipped}\n\n"
+        f"📝 In this week's pool: {report.pool_size}\n"
+        f"👥 Members: {report.total}"
+    )
+
+
+LOVE_LETTERS_ASK_MEMBER = "Send me the member's name, or their Telegram ID."
+LOVE_LETTERS_NO_MATCH = "I couldn't find anyone by that name. Try another spelling."
+LOVE_LETTERS_MEMBER_GONE = "I lost track of who to send to. Please start again."
+LOVE_LETTERS_LETTER_GONE = "That letter is no longer available."
+LOVE_LETTERS_RANDOM_BUTTON = "🎲 Pick one at random"
+
+
+def love_letters_choose_member(term: str, shown: int, total: int) -> str:
+    if total > shown:
+        return (
+            f"<b>{total}</b> members match \"{escape(term)}\". "
+            f"Showing the first {shown} — pick one, or send a fuller name."
+        )
+    return f"Which \"{escape(term)}\" did you mean?"
+
+
+def love_letters_ask_letter(name: str, letter_count: int) -> str:
+    return (
+        f"Sending to <b>{escape(name)}</b>.\n\n"
+        f"Which of this week's {letter_count} letter(s)?"
+    )
+
+
+def love_letters_confirm_delete(index: int, body: str) -> str:
+    return (
+        f"Remove letter {index}?\n\n"
+        f"<i>{escape(_letter_preview(body, 300))}</i>\n\n"
+        "It won't be sent to anyone. This only affects this week."
+    )
+
+
+def love_letter_deleted(count: int, body: str) -> str:
+    return (
+        f"🗑 Removed: <i>{escape(_letter_preview(body, 120))}</i>\n\n"
+        f"This week now has {count} letter(s)."
+    )
+
+
+def letter_option(index: int, body: str) -> str:
+    return f"{index}. {_letter_preview(body, 40)}"
+
+
+def love_letters_direct_sent(name: str, body: str) -> str:
+    return (
+        f"✅ Sent to <b>{escape(name)}</b>.\n\n"
+        f"<i>{escape(_letter_preview(body, 200))}</i>"
+    )
