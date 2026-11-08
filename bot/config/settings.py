@@ -37,6 +37,8 @@ class Settings:
     google_api_key: str | None
     admin_ids: tuple[int, ...]
     gsheet_url: str
+    webhook_secret: str | None
+    public_url: str | None
 
     @property
     def primary_admin_id(self) -> int | None:
@@ -49,4 +51,7 @@ settings = Settings(
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     admin_ids=_parse_admin_ids(os.getenv("ADMIN_IDS", ""), os.getenv("ADMIN_ID", "")),
     gsheet_url=os.getenv("GSHEET_URL", DEFAULT_GSHEET_URL),
+    webhook_secret=os.getenv("WEBHOOK_SECRET"),
+    # Render provides RENDER_EXTERNAL_URL; PUBLIC_URL overrides it for testing.
+    public_url=os.getenv("PUBLIC_URL") or os.getenv("RENDER_EXTERNAL_URL"),
 )
