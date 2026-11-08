@@ -65,9 +65,29 @@ away from what the bot actually does.
 | `/admins` | See who has admin access and how long temporary access has left |
 | `/make_admin` | Give a member admin access for a set time |
 | `/revoke_admin` | End someone's temporary access now |
+| `/love_letters` | Send this week's love letters, to everyone or to one member |
+| `/add_letter` | Write a love letter for this week |
 
 Admins see these in their Telegram command menu; members don't. Hiding a command isn't
 protection though — every admin command also checks who sent it, in `utils/auth.py`.
+
+## Love letters
+
+Letters are written per week, so each week gets a fresh set instead of rotating
+one pool forever.
+
+- `/add_letter` saves one letter per message. Write `{name}` where the member's
+  first name should go; if their name is missing it becomes "prayer force member".
+- `/love_letters` is the admin hub: send to everyone, send to one member, add a
+  letter, or review this week's set.
+- Sending to everyone gives **each member a random letter from that week's set**,
+  so two people can receive different letters.
+- A member only gets one weekly letter. Anyone already served is skipped, which
+  makes a re-run safe after a restart or a double-click.
+- Sending one specific letter to one person is **in addition** to their weekly
+  letter: direct sends are logged separately and don't use up their week.
+
+Scheduling (a weekly slot) is not built yet; for now an admin triggers the send.
 
 ## Admins
 
