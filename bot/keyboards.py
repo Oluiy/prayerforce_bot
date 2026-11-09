@@ -86,3 +86,70 @@ def revoke_admin_markup(entries) -> InlineKeyboardMarkup:
     ]
     rows.append([InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="revokeadmin_cancel")])
     return InlineKeyboardMarkup(rows)
+
+
+# --- Love letters ------------------------------------------------------------
+def love_letters_hub_markup(letter_count: int) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton("Send to everyone", callback_data="ll_send_all")],
+        [InlineKeyboardButton("Send to one member", callback_data="ll_send_one")],
+        [InlineKeyboardButton("Add a letter", callback_data="ll_add")],
+    ]
+    if letter_count:
+        rows.append([InlineKeyboardButton("See this week's letters", callback_data="ll_list")])
+    rows.append([InlineKeyboardButton("Close", callback_data="ll_cancel")])
+    return InlineKeyboardMarkup(rows)
+
+
+def love_letters_confirm_markup() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("Yes, send them", callback_data="ll_go_all")],
+            [InlineKeyboardButton("Cancel", callback_data="ll_cancel")],
+        ]
+    )
+
+
+def love_letters_back_markup() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [[InlineKeyboardButton("Back", callback_data="ll_home")]]
+    )
+
+
+def love_letters_list_markup(letters) -> InlineKeyboardMarkup:
+    """`letters` in the same order as the text, so "Remove 1" matches item 1."""
+    rows = [
+        [InlineKeyboardButton(f"Remove {index}", callback_data=f"lldel_{letter.id}")]
+        for index, letter in enumerate(letters, start=1)
+    ]
+    rows.append([InlineKeyboardButton("Back", callback_data="ll_home")])
+    return InlineKeyboardMarkup(rows)
+
+
+def love_letters_delete_confirm_markup(letter_id) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("Yes, remove it", callback_data=f"lldelok_{letter_id}")],
+            [InlineKeyboardButton("Keep it", callback_data="ll_list")],
+        ]
+    )
+
+
+def love_letters_member_markup(choices) -> InlineKeyboardMarkup:
+    """`choices` is a list of (chat_id, label)."""
+    rows = [
+        [InlineKeyboardButton(label, callback_data=f"llmem_{chat_id}")]
+        for chat_id, label in choices
+    ]
+    rows.append([InlineKeyboardButton("Cancel", callback_data="ll_cancel")])
+    return InlineKeyboardMarkup(rows)
+
+
+def love_letters_pick_markup(letters) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(messages.letter_option(i, letter.body), callback_data=f"llletter_{letter.id}")]
+        for i, letter in enumerate(letters, start=1)
+    ]
+    rows.append([InlineKeyboardButton(messages.LOVE_LETTERS_RANDOM_BUTTON, callback_data="ll_random")])
+    rows.append([InlineKeyboardButton("Cancel", callback_data="ll_cancel")])
+    return InlineKeyboardMarkup(rows)
