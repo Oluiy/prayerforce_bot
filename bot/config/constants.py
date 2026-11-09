@@ -14,7 +14,7 @@ DATABASE_CONNECT_ATTEMPTS = 3
 
 # --- Meeting times and prices (defaults; admins change these via /settings) --
 PRE_SERVICE_TIME = "7:00 AM - 7:30 AM"
-POST_SERVICE_TIME = "8:05 AM - 8:35 AM"
+POST_SERVICE_TIME = "8:20 AM - 8:50 AM"
 ANNOUNCEMENT_TIME = "5:30pm"
 TSHIRT_PRICE = "₦5,000"
 JOURNAL_PRICE = "₦3,500"
@@ -65,3 +65,8 @@ ADMIN_EXPIRY_SWEEP_SECONDS = 60
 MONTHLY_LEADERBOARD_TIME = time(hour=23, minute=30)
 MONTHLY_RECAP_TIME = time(hour=12, minute=0)
 BIRTHDAY_MESSAGE_TIME = time(hour=8, minute=0)
+
+# --- Weekly meeting reminder delivery times -------------------------------
+TUESDAY_MEETING_REMINDER_TIME = time(hour=21, minute=0)
+THURSDAY_MEETING_REMINDER_TIME = time(hour=21, minute=0)
+SUNDAY_MEETING_REMINDER_TIME = time(hour=21, minute=0)
