@@ -19,13 +19,15 @@ Run the bot from the `bot/` folder with `python main.py`.
 
 ```
 bot/
-├── main.py            Starts the bot
+├── main.py            Starts the bot locally (long polling)
+├── web.py             Starts the bot deployed (webhook + /health)
+├── bootstrap.py       Startup shared by both entry points
 ├── messages.py        All text the bot sends to users
 ├── keyboards.py       The buttons shown under messages
 ├── notifications.py   Announcing quiz openings and results to everyone
 ├── config/            Settings (read .env values) and defaults (times, links, quiz rules)
 ├── handlers/          What happens when a user sends a command
-├── jobs/              Tasks that run on a schedule (quizzes, birthdays)
+├── jobs/              Tasks that run on a schedule (quizzes, birthdays, keepalive)
 ├── services/          The actual logic (quizzes, broadcasts, Gemini AI, PDFs, Google Sheets)
 ├── repositories/      Every database query
 ├── database/          Database schema and connection
@@ -37,6 +39,20 @@ How a request flows: a **handler** or **job** receives it, asks a **service** to
 the service uses **repositories** to read or write the database, and the reply text comes from **messages.py**.
 
 Only `config/settings.py` reads the `.env` file.
+
+### Local vs deployed
+
+Locally, `python main.py` uses long polling, so no public URL or tunnel is needed.
+Deployed, the same bot runs behind uvicorn (`web.py`) and Telegram posts updates to
+`/telegram`, which needs a public HTTPS address (`RENDER_EXTERNAL_URL`).
+
+- `/health` is a liveness check and deliberately never touches the database.
+- `WEBHOOK_SECRET` is required in webhook mode and is checked against Telegram's
+  `X-Telegram-Bot-Api-Secret-Token` header.
+- A self-ping calls `/health` every 5 minutes, which keeps a free Render web
+  service from falling asleep. It does nothing locally.
+- Run uvicorn with a **single worker**: quiz sessions, admin grants and the
+  settings cache live in memory.
 
 ## Changing things without touching the code
 

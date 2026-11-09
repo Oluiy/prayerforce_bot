@@ -7,6 +7,7 @@ the clock, and their times come from /settings.
 import logging
 from datetime import datetime, time
 
+from config import settings
 from config.constants import (
     ADMIN_EXPIRY_SWEEP_SECONDS,
     SCHEDULE_SWEEP_SECONDS,
@@ -18,6 +19,7 @@ from telegram.ext import Application, JobQueue
 
 from jobs.admin_jobs import expire_admin_grants
 from jobs.birthday_jobs import send_birthday_messages
+from jobs.keepalive import PING_FIRST_SECONDS, PING_INTERVAL_SECONDS, self_ping
 from jobs.meeting_jobs import send_meeting_reminder
 from jobs.quiz_jobs import (
     generate_monthly_recap,
@@ -29,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 SWEEP_JOB = "quiz_schedule_sweep"
 ADMIN_EXPIRY_JOB = "admin_expiry_sweep"
+KEEPALIVE_JOB = "keepalive_ping"
 
 # job name -> (callback, settings key holding its time)
 DAILY_JOBS = {
@@ -52,6 +55,17 @@ def schedule_jobs(job_queue: JobQueue):
     job_queue.run_repeating(
         expire_admin_grants, interval=ADMIN_EXPIRY_SWEEP_SECONDS, first=10, name=ADMIN_EXPIRY_JOB
     )
+
+    # Only deployed instances have a public URL to ping.
+    if settings.public_url:
+        job_queue.run_repeating(
+            self_ping,
+            interval=PING_INTERVAL_SECONDS,
+            first=PING_FIRST_SECONDS,
+            name=KEEPALIVE_JOB,
+        )
+        logger.info("Self-ping every %s seconds", PING_INTERVAL_SECONDS)
+
     _schedule_daily_jobs(job_queue)
     _schedule_meeting_reminders(job_queue)
 
