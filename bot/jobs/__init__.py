@@ -5,7 +5,7 @@ the sweep acts on them. Only jobs with no quiz behind them are scheduled by
 the clock, and their times come from /settings.
 """
 import logging
-from datetime import time
+from datetime import datetime, time
 
 from config import settings
 from config.constants import (
@@ -13,12 +13,14 @@ from config.constants import (
     SCHEDULE_SWEEP_SECONDS,
     TIMEZONE,
 )
+
 from services import settings_service
 from telegram.ext import Application, JobQueue
 
 from jobs.admin_jobs import expire_admin_grants
 from jobs.birthday_jobs import send_birthday_messages
 from jobs.keepalive import PING_FIRST_SECONDS, PING_INTERVAL_SECONDS, self_ping
+from jobs.meeting_jobs import send_meeting_reminder
 from jobs.quiz_jobs import (
     generate_monthly_recap,
     send_monthly_cumulative_leaderboard,
@@ -40,7 +42,9 @@ DAILY_JOBS = {
 
 
 def _local(value: time) -> time:
-    return time(hour=value.hour, minute=value.minute, tzinfo=TIMEZONE)
+    local_date = datetime.now(TIMEZONE).date()
+    local_datetime = TIMEZONE.localize(datetime.combine(local_date, value))
+    return local_datetime.timetz()
 
 
 def schedule_jobs(job_queue: JobQueue):
@@ -63,6 +67,7 @@ def schedule_jobs(job_queue: JobQueue):
         logger.info("Self-ping every %s seconds", PING_INTERVAL_SECONDS)
 
     _schedule_daily_jobs(job_queue)
+    _schedule_meeting_reminders(job_queue)
 
 
 def _schedule_daily_jobs(job_queue: JobQueue):
@@ -72,13 +77,62 @@ def _schedule_daily_jobs(job_queue: JobQueue):
         logger.info("Scheduled %s at %s", name, at.strftime("%H:%M %Z"))
 
 
-def reschedule_jobs(app: Application):
-    """Put the daily jobs back on the queue at their current times.
+def _schedule_meeting_reminders(job_queue: JobQueue):
+    """Schedule reminders on the night before each service."""
 
-    Called after an admin changes a time in /settings, so the new time applies
-    without restarting the bot.
-    """
-    for name in DAILY_JOBS:
+    reminders = [
+        (
+            "tuesday_meeting_reminder",
+            "tuesday_meeting_reminder_time",
+            1,  # Monday
+            "Tuesday",
+        ),
+        (
+            "thursday_meeting_reminder",
+            "thursday_meeting_reminder_time",
+            3,  # Wednesday
+            "Thursday",
+        ),
+        (
+            "sunday_meeting_reminder",
+            "sunday_meeting_reminder_time",
+            6,  # Saturday
+            "Sunday",
+        ),
+    ]
+
+    for name, settings_key, reminder_day, service_day in reminders:
+        at = _local(settings_service.get(settings_key))
+
+        job_queue.run_daily(
+            send_meeting_reminder,
+            time=at,
+            days=(reminder_day,),
+            data=service_day,
+            name=name,
+        )
+
+        logger.info(
+            "Scheduled %s for %s at %s",
+            name,
+            service_day,
+            at.strftime("%H:%M %Z"),
+        )
+
+
+def reschedule_jobs(app: Application):
+    """Reschedule daily jobs and meeting reminders after settings change."""
+
+    job_names = [
+        *DAILY_JOBS.keys(),
+        "tuesday_meeting_reminder",
+        "thursday_meeting_reminder",
+        "sunday_meeting_reminder",
+    ]
+
+    for name in job_names:
         for job in app.job_queue.get_jobs_by_name(name):
             job.schedule_removal()
+
     _schedule_daily_jobs(app.job_queue)
+    _schedule_meeting_reminders(app.job_queue)
