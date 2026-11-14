@@ -13,7 +13,7 @@ import hmac
 import logging
 from contextlib import asynccontextmanager
 
-from bootstrap import build_application, shutdown_application
+from bootstrap import build_application, retry_telegram, shutdown_application
 from config import settings
 from starlette.applications import Starlette
 from starlette.requests import Request
@@ -54,7 +54,10 @@ async def register_webhook(application):
         raise RuntimeError("WEBHOOK_SECRET is not set; refusing to expose the bot.")
 
     url = f"{settings.public_url.rstrip('/')}{TELEGRAM_PATH}"
-    await application.bot.set_webhook(url=url, secret_token=settings.webhook_secret)
+    await retry_telegram(
+        lambda: application.bot.set_webhook(url=url, secret_token=settings.webhook_secret),
+        "Registering the webhook",
+    )
     logger.info("Webhook set to %s", url)
 
 
