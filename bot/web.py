@@ -11,6 +11,7 @@ and deliberately does not touch the database.
 """
 import hmac
 import logging
+import re
 from contextlib import asynccontextmanager
 
 from bootstrap import build_application, retry_telegram, shutdown_application
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 SECRET_HEADER = "X-Telegram-Bot-Api-Secret-Token"
 TELEGRAM_PATH = "/telegram"
+# Telegram's rule for secret_token: 1-256 of A-Z, a-z, 0-9, _ and -.
+VALID_SECRET = re.compile(r"[A-Za-z0-9_-]{1,256}")
 
 
 @asynccontextmanager
@@ -52,6 +55,16 @@ async def register_webhook(application):
         )
     if not settings.webhook_secret:
         raise RuntimeError("WEBHOOK_SECRET is not set; refusing to expose the bot.")
+    if not VALID_SECRET.fullmatch(settings.webhook_secret):
+        # Never log the secret itself, only what is wrong with it.
+        bad = sorted({c for c in settings.webhook_secret if not re.fullmatch(r"[A-Za-z0-9_-]", c)})
+        raise RuntimeError(
+            "WEBHOOK_SECRET may only contain letters, numbers, _ and - "
+            f"(and be at most 256 long). It is {len(settings.webhook_secret)} characters "
+            f"and contains {len(bad)} kind(s) of disallowed character, e.g. "
+            f"{', '.join(repr(c) for c in bad[:3]) or 'none'}. "
+            'Generate one with: python3 -c "import secrets; print(secrets.token_urlsafe(32))"'
+        )
 
     url = f"{settings.public_url.rstrip('/')}{TELEGRAM_PATH}"
     await retry_telegram(

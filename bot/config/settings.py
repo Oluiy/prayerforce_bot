@@ -51,7 +51,9 @@ settings = Settings(
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     admin_ids=_parse_admin_ids(os.getenv("ADMIN_IDS", ""), os.getenv("ADMIN_ID", "")),
     gsheet_url=os.getenv("GSHEET_URL", DEFAULT_GSHEET_URL),
-    webhook_secret=os.getenv("WEBHOOK_SECRET"),
+    # Trimmed: a space or newline pasted into the Render dashboard is invisible
+    # there but makes Telegram reject the whole secret.
+    webhook_secret=(os.getenv("WEBHOOK_SECRET") or "").strip().strip("\"'") or None,
     # Render provides RENDER_EXTERNAL_URL; PUBLIC_URL overrides it for testing.
     public_url=os.getenv("PUBLIC_URL") or os.getenv("RENDER_EXTERNAL_URL"),
 )
