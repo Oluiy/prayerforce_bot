@@ -4,6 +4,7 @@ This is the only module that reads environment variables. Everything else
 imports `settings` from here instead of calling os.getenv / load_dotenv.
 """
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,12 +22,15 @@ DEFAULT_GSHEET_URL = (
 
 
 def _parse_admin_ids(*raw_values: str) -> tuple[int, ...]:
-    """Parse comma-separated Telegram user IDs, keeping order and dropping duplicates."""
+    """Read Telegram user IDs however they're separated, keeping order.
+
+    Commas, spaces, semicolons, new lines, brackets and quotes all work, so a
+    list typed into the Render dashboard can't silently come out empty.
+    """
     ids: list[int] = []
     for raw in raw_values:
-        for part in raw.split(","):
-            part = part.strip()
-            if part.isdigit() and int(part) not in ids:
+        for part in re.findall(r"\d+", raw or ""):
+            if int(part) not in ids:
                 ids.append(int(part))
     return tuple(ids)
 

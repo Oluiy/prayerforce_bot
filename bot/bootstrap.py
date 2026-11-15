@@ -69,6 +69,12 @@ async def build_application(polling: bool) -> Application:
     if not settings.telegram_bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is not set.")
 
+    # A count, never the IDs themselves.
+    if settings.admin_ids:
+        logger.info("Loaded %s permanent admin(s) from ADMIN_IDS.", len(settings.admin_ids))
+    else:
+        logger.error("ADMIN_IDS is empty or unreadable: nobody can use admin commands.")
+
     await connect_with_retry()
     logger.info("Database connected successfully!")
     warn_if_client_is_stale()
