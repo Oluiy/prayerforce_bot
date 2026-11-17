@@ -12,9 +12,14 @@ TIMEZONE = pytz.timezone("Africa/Lagos")
 DATABASE_CONNECT_TIMEOUT_SECONDS = 60
 DATABASE_CONNECT_ATTEMPTS = 3
 
+# --- Sessions ----------------------------------------------------------------
+# Only used until an admin runs /new_session; after that the database holds it.
+DEFAULT_SESSION = "2025/2026"
+
 # --- Meeting times and prices (defaults; admins change these via /settings) --
 PRE_SERVICE_TIME = "7:00 AM - 7:30 AM"
 POST_SERVICE_TIME = "8:20 AM - 8:50 AM"
+WEEKDAYS_PRESERVICE = "7:00 AM - 7:25 AM"
 ANNOUNCEMENT_TIME = "5:30pm"
 TSHIRT_PRICE = "₦5,000"
 JOURNAL_PRICE = "₦3,500"
