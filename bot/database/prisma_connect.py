@@ -40,6 +40,7 @@ REQUIRED_MODELS = (
     "dailyquizcumulative",
     "setting",
     "admingrant",
+    "membership",
 )
 
 

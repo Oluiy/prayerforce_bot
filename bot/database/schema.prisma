@@ -22,6 +22,18 @@ model User {
   scores               UserScore[]
   cumulativeMonthly    DailyQuizCumulative[]
   loveLetterDeliveries LoveLetterDelivery[]
+  memberships          Membership[]
+}
+
+model Membership {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  session   String   //e.g "2025/2026"
+  active    Boolean  @default(true)
+  joinedAt  DateTime @default(now())
+
+  @@unique([userId, session])
 }
 
 model Payment {
