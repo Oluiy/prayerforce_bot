@@ -24,6 +24,7 @@ from handlers.quiz_schedule import (
     quizzes_handler,
 )
 from handlers.quiz_user import quiz_user_handler
+from handlers.sessions import new_session_handler, session_invite_handler
 from handlers.settings import settings_handler
 from handlers.start import start_handler, start_text_handler
 
@@ -48,6 +49,8 @@ HANDLERS = [
     revoke_admin_handler,
     revoke_admin_callback_handler,
     love_letters_handler,
+    new_session_handler,
+    session_invite_handler,
     quiz_user_handler,
     leaderboard_handler,
     leaderboard_callback_handler,

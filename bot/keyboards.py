@@ -153,3 +153,31 @@ def love_letters_pick_markup(letters) -> InlineKeyboardMarkup:
     rows.append([InlineKeyboardButton(messages.LOVE_LETTERS_RANDOM_BUTTON, callback_data="ll_random")])
     rows.append([InlineKeyboardButton("Cancel", callback_data="ll_cancel")])
     return InlineKeyboardMarkup(rows)
+
+
+# --- Sessions ----------------------------------------------------------------
+def new_session_suggest_markup(suggested: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton(suggested, callback_data=f"newsess_pick_{suggested}")],
+            [InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="newsess_cancel")],
+        ]
+    )
+
+
+def new_session_confirm_markup() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton(messages.NEW_SESSION_CONFIRM_BUTTON, callback_data="newsess_confirm")],
+            [InlineKeyboardButton(messages.SCHEDULE_CANCEL_BUTTON, callback_data="newsess_cancel")],
+        ]
+    )
+
+
+def session_invite_markup(session: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton(messages.SESSION_JOIN_BUTTON, callback_data=f"sessjoin_{session}")],
+            [InlineKeyboardButton(messages.SESSION_LEAVE_BUTTON, callback_data=f"sessleave_{session}")],
+        ]
+    )

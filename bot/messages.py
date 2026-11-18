@@ -38,6 +38,7 @@ ADMIN_COMMANDS = [
     ("revoke_admin", "End someone's temporary admin access"),
     ("love_letters", "Send love letters to members"),
     ("add_letter", "Write a love letter for this week"),
+    ("new_session", "Start a new session and ask members to rejoin"),
 ]
 
 
@@ -687,4 +688,64 @@ def love_letters_direct_sent(name: str, body: str) -> str:
     return (
         f"✅ Sent to <b>{escape(name)}</b>.\n\n"
         f"<i>{escape(_letter_preview(body, 200))}</i>"
+    )
+
+
+# --- Sessions ----------------------------------------------------------------
+NEW_SESSION_NOT_AUTHORIZED = "Only a permanent admin can start a new session."
+NEW_SESSION_CANCELLED = "Nothing changed. The session is the same as before."
+NEW_SESSION_CONFIRM_BUTTON = "Yes, start it"
+SESSION_JOIN_BUTTON = "✅ Yes, count me in"
+SESSION_LEAVE_BUTTON = "I've moved on"
+SESSION_INVITE_OLD = "That question was for an earlier session, so nothing changed."
+
+
+def new_session_ask(current: str, member_count: int, suggested: str) -> str:
+    return (
+        f"🗓 <b>The current session is {escape(current)}</b> "
+        f"with {member_count} active member(s).\n\n"
+        f"Tap below to start <b>{escape(suggested)}</b>, or type another one, like "
+        "<code>2026/2027</code>.\n\n"
+        "Send /cancel to stop."
+    )
+
+
+def new_session_rejected(reason: str) -> str:
+    return f"⚠️ {escape(reason)}"
+
+
+def new_session_confirm(previous: str, new: str, member_count: int) -> str:
+    return (
+        f"Start <b>{escape(new)}</b>?\n\n"
+        f"Broadcasts, reminders, birthdays and love letters will only go to people in {escape(new)}. "
+        f"The {member_count} member(s) of {escape(previous)} will each be asked whether "
+        "they're continuing. Anyone who says no, or doesn't answer, stops getting messages.\n\n"
+        "Nobody's history is deleted."
+    )
+
+
+def new_session_started(new: str, sent: int, failed: int) -> str:
+    text = f"✅ <b>{escape(new)}</b> has started. I asked {sent} member(s) whether they're continuing."
+    if failed:
+        text += f"\n\n{failed} couldn't be reached (they may have blocked the bot)."
+    return text
+
+
+def session_invite(new: str, name: str) -> str:
+    return (
+        f"Hi {escape(name)}! 🙏\n\n"
+        f"A new Prayer Force session, <b>{escape(new)}</b>, has started.\n\n"
+        "Are you still part of us this session? If you are, tap below to keep getting "
+        "meeting reminders, quizzes and updates."
+    )
+
+
+def session_joined(session: str) -> str:
+    return f"🎉 Welcome to {escape(session)}! You'll keep getting updates."
+
+
+def session_left(session: str) -> str:
+    return (
+        f"Thank you for everything. You won't get {escape(session)} updates.\n\n"
+        "If that changes, just send /start."
     )
