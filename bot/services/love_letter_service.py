@@ -14,7 +14,8 @@ import random
 import uuid
 
 from config.constants import TIMEZONE
-from repositories import love_letter_repository, user_repository
+from repositories import love_letter_repository
+from services import session_service
 from utils.dates import local_now
 
 logger = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ async def overview(key: str | None = None):
     """Everything the admin hub shows: (week, letters, member_count, served)."""
     key = key or week_key()
     letters = await love_letter_repository.list_for_week(key)
-    members = await user_repository.list_all()
+    members = await session_service.members()
     served = await love_letter_repository.count_deliveries(key, WEEKLY)
     return key, letters, members, served
 
@@ -106,7 +107,7 @@ async def send_weekly(bot, members=None, letters=None, now=None) -> SendReport:
     if not letters:
         raise LoveLetterError("there are no letters for this week yet - add one first.")
 
-    members = members if members is not None else await user_repository.list_all()
+    members = members if members is not None else await session_service.members()
     already_served = await love_letter_repository.delivered_user_ids(key, WEEKLY)
     batch_id = str(uuid.uuid4())
     report = SendReport(pool_size=len(letters), total=len(members))

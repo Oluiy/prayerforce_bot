@@ -5,6 +5,7 @@ import logging
 import messages
 from config.constants import TIMEZONE
 from repositories import user_repository
+from services import session_service
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,9 @@ async def send_birthday_message(bot, user, mates):
 
 
 async def greet_todays_birthdays(bot):
-    """Send a greeting to everyone whose birthday is today. Returns how many were sent."""
+    """Greet every member of the current session whose birthday is today. Returns how many were sent."""
     today = datetime.datetime.now(TIMEZONE).date()
-    birthday_users = await user_repository.list_by_birthday(today)
+    birthday_users = await user_repository.list_by_birthday(today, session_service.current())
     sent = 0
     for user in birthday_users:
         mates = [u for u in birthday_users if u.chatId != user.chatId]
