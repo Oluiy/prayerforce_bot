@@ -9,13 +9,20 @@ from telegram.ext import ContextTypes
 
 logger = logging.getLogger(__name__)
 
+# Which /settings value holds each day's pre-service prayer time.
+PRE_SERVICE_SETTING = {
+    "Tuesday": "tuesday_service_time",
+    "Thursday": "thursday_service_time",
+    "Sunday": "pre_service_time",
+}
+
 
 async def send_meeting_reminder(context: ContextTypes.DEFAULT_TYPE):
     """Send the reminder for the next day's prayer meeting."""
 
     service_day = context.job.data
 
-    pre_service_time = settings_service.get("pre_service_time")
+    pre_service_time = settings_service.get(PRE_SERVICE_SETTING[service_day])
 
     post_service_time = None
 
