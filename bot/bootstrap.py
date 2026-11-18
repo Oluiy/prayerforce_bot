@@ -14,7 +14,7 @@ from handlers import register_handlers
 from handlers.menu import set_bot_commands
 from handlers.settings import set_change_callback
 from jobs import reschedule_jobs, schedule_jobs
-from services import admin_service, settings_service
+from services import admin_service, session_service, settings_service
 from telegram.error import BadRequest, NetworkError, TimedOut
 from telegram.ext import Application, ApplicationBuilder
 
@@ -83,6 +83,8 @@ async def build_application(polling: bool) -> Application:
     await settings_service.load()
     # Live temporary-admin grants, so access survives a restart.
     await admin_service.load()
+    # Which session is running, so broadcasts only reach its members.
+    await session_service.load()
 
     builder = (
         ApplicationBuilder()

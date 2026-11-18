@@ -22,12 +22,22 @@ async def get_or_create(telegram_user):
 
 
 async def list_all():
+    """Everyone who has ever used the bot, across every session."""
     return await db.user.find_many()
 
 
-async def list_by_birthday(day):
-    """Users whose birthday falls on this month and day, in any year."""
-    users = await db.user.find_many(where={"birthday": {"not": None}})
+def _in_session(session: str):
+    return {"memberships": {"some": {"session": session, "active": True}}}
+
+
+async def list_members(session: str):
+    """People who are active in `session`. Use this for anything sent to members."""
+    return await db.user.find_many(where=_in_session(session))
+
+
+async def list_by_birthday(day, session: str):
+    """Active members of `session` whose birthday falls on this month and day."""
+    users = await db.user.find_many(where={"birthday": {"not": None}, **_in_session(session)})
     return [u for u in users if (u.birthday.month, u.birthday.day) == (day.month, day.day)]
 
 
